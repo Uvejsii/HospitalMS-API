@@ -13,6 +13,8 @@ namespace HospitalMS_API.Mappings
             CreateMap<UpdateDoctorRequestDto, Doctor>().ReverseMap();
 
             CreateMap<Departament, DepartamentDto>().ReverseMap();
+            CreateMap<AddDepartamentRequestDto, Departament>().ReverseMap();
+            CreateMap<UpdateDepartamentRequestDto, Departament>().ReverseMap();
         }
     }
 }

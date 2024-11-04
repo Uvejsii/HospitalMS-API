@@ -9,6 +9,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
 {
     public interface IDepartamentRepository : IRepository<Departament>
     {
-        void UpdateAsync(Departament departament);
+        Task<Departament?> UpdateAsync(int id, Departament departament);
+        Task<bool> DeleteDepartment(int id);
     }
 }
