@@ -36,7 +36,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetAllDepartments")]
         public async Task<IActionResult> GetAll()
         {
-            var departmentsDomainModel = await _unitOfWork.Departament.GetAllAsync(includeProperties: "Doctors");
+            var departmentsDomainModel = await _unitOfWork.Departament.GetAllAsync(); // removed: includeProp
 
             return Ok(_mapper.Map<List<DepartamentDto>>(departmentsDomainModel));
         }
