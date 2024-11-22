@@ -8,10 +8,6 @@ namespace HospitalMS_API.Mappings
     {
         public AutoMapperProfiles()
         {
-            //CreateMap<Doctor, DoctorDto>()
-            // .ForMember(dest => dest.Departament, opt => opt.MapFrom(src => src.Departament))
-            // .ReverseMap();
-
             CreateMap<Doctor, DoctorDto>().ReverseMap();
             CreateMap<AddDoctorRequestDto, Doctor>().ReverseMap();
             CreateMap<UpdateDoctorRequestDto, Doctor>().ReverseMap();

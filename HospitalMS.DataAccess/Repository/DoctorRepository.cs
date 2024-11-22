@@ -1,6 +1,8 @@
 ﻿using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -13,9 +15,14 @@ namespace HospitalMS.DataAccess.Repository
     public class DoctorRepository : Repository<Doctor>, IDoctorRepository
     {
         private ApplicationDbContext _db;
-        public DoctorRepository(ApplicationDbContext db) : base(db)
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public DoctorRepository(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor) : base(db)
         {
             _db = db;
+            _webHostEnvironment = webHostEnvironment;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Doctor?> UpdateAsync(int id, Doctor doctor)
@@ -32,9 +39,9 @@ namespace HospitalMS.DataAccess.Repository
                 doctorFromDb.PhoneNumber = doctor.PhoneNumber;
                 doctorFromDb.ConsultationFee = doctor.ConsultationFee;
                 doctorFromDb.isAvailable = doctor.isAvailable;
-                if (doctor.ImageIrl != null)
+                if (doctor.Image != null)
                 {
-                    doctorFromDb.ImageIrl = doctor.ImageIrl;
+                    doctorFromDb.Image = doctor.Image;
                 }
 
                 return doctorFromDb;
@@ -54,6 +61,20 @@ namespace HospitalMS.DataAccess.Repository
             }
 
             return false;
+        }
+
+        public async Task<Doctor?> UploadDrImage(Doctor doctor)
+        {
+            var localFilePath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images", $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
+
+            using var stream = new FileStream(localFilePath, FileMode.Create);
+            await doctor.Image.CopyToAsync(stream);
+
+            var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctor.ImageFileExtension}";
+
+            doctor.ImageFilePath = urlFilePath;
+
+            return doctor;
         }
     }
 }

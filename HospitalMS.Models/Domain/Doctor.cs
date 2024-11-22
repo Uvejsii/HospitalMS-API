@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -14,7 +15,12 @@ namespace HospitalMS.Models.Domain
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string ImageIrl { get; set; }
+        [NotMapped]
+        public IFormFile Image { get; set; }
+        public string ImageFileName { get; set; }
+        public string ImageFileExtension { get; set; }
+        public long ImageFileSizeInBytes { get; set; }
+        public string ImageFilePath { get; set; }
         public int YearsOfExperience { get; set; }
         public int DepartamentId { get; set; }
         [ForeignKey("DepartamentId")]

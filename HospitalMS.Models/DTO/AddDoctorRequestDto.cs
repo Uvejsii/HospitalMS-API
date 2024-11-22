@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -14,8 +15,6 @@ namespace HospitalMS.Models.DTO
         [Required]
         public string LastName { get; set; }
         [Required]
-        public string ImageIrl { get; set; }
-        [Required]
         public int YearsOfExperience { get; set; }
         [Required]
         public string Email { get; set; }
@@ -27,5 +26,9 @@ namespace HospitalMS.Models.DTO
         public bool isAvailable { get; set; }
         [Required]
         public int DepartamentId { get; set; }
+        [Required]
+        public IFormFile Image { get; set; }
+        [Required]
+        public string ImageFileName { get; set; }
     }
 }

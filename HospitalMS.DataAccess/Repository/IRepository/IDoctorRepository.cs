@@ -11,5 +11,6 @@ namespace HospitalMS.DataAccess.Repository.IRepository
     {
         Task<Doctor?> UpdateAsync(int id, Doctor doctor);
         Task<bool> DeleteDoc(int? id);
+        Task<Doctor?> UploadDrImage(Doctor doctor);
     }
 }

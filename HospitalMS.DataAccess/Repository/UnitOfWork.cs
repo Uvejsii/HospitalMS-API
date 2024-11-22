@@ -1,5 +1,7 @@
 ﻿using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository.IRepository;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +16,10 @@ namespace HospitalMS.DataAccess.Repository
 
         public IDoctorRepository Doctor {  get; private set; }
         public IDepartamentRepository Departament { get; private set; }
-        public UnitOfWork(ApplicationDbContext db)
+        public UnitOfWork(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
-            Doctor = new DoctorRepository(_db);
+            Doctor = new DoctorRepository(_db, webHostEnvironment, httpContextAccessor);
             Departament = new DepartamentRepository(_db);
         }
 

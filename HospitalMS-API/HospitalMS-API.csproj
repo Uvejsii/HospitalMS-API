@@ -23,4 +23,8 @@
     <ProjectReference Include="..\HospitalMS.DataAccess\HospitalMS.DataAccess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Images\" />
+  </ItemGroup>
+
 </Project>

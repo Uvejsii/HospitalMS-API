@@ -4,6 +4,7 @@ using HospitalMS.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HospitalMS.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241120201939_AddedDoctorToImageRelation")]
+    partial class AddedDoctorToImageRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,20 +68,8 @@ namespace HospitalMS.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImageFileExtension")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImageFileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImageFilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("ImageFileSizeInBytes")
-                        .HasColumnType("bigint");
+                    b.Property<int>("ImageId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("JoinedDate")
                         .HasColumnType("datetime2");
@@ -101,7 +92,42 @@ namespace HospitalMS.DataAccess.Migrations
 
                     b.HasIndex("DepartamentId");
 
+                    b.HasIndex("ImageId");
+
                     b.ToTable("Doctors");
+                });
+
+            modelBuilder.Entity("HospitalMS.Models.Domain.Image", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("DoctorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSizeInBytes")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoctorId");
+
+                    b.ToTable("Images");
                 });
 
             modelBuilder.Entity("HospitalMS.Models.Domain.Doctor", b =>
@@ -112,7 +138,24 @@ namespace HospitalMS.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HospitalMS.Models.Domain.Image", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Departament");
+
+                    b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("HospitalMS.Models.Domain.Image", b =>
+                {
+                    b.HasOne("HospitalMS.Models.Domain.Doctor", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId");
+
+                    b.Navigation("Doctor");
                 });
 
             modelBuilder.Entity("HospitalMS.Models.Domain.Departament", b =>
