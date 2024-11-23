@@ -38,7 +38,7 @@ namespace HospitalMS_API.Controllers
                 return BadRequest(new { message = "File extension is missing or invalid." });
             }
 
-            ValidateFileUpload(addDoctorRequestDto);
+            await _unitOfWork.Doctor.ValidateFileUpload(addDoctorRequestDto);
             
             doctorDomaniModel.Image = addDoctorRequestDto.Image;
             doctorDomaniModel.ImageFileExtension = fileExtension;
@@ -50,21 +50,6 @@ namespace HospitalMS_API.Controllers
             await _unitOfWork.SaveAsync();
 
             return Ok();
-        }
-
-        private void ValidateFileUpload(AddDoctorRequestDto requestDto)
-        {
-            var allowedExtensions = new string[] { ".jpg", ".jpeg", ".png" };
-
-            if (!allowedExtensions.Contains(Path.GetExtension(requestDto.Image.FileName)))
-            {
-                ModelState.AddModelError("file", "Unsupported file extension");
-            }
-
-            if (requestDto.Image.Length > 10485760)
-            {
-                ModelState.AddModelError("file", "File size more than 10MB, please upload a smaller size file");
-            }
         }
 
         [HttpGet]
@@ -92,15 +77,43 @@ namespace HospitalMS_API.Controllers
 
         [HttpPut]
         [Route("EditDoctor/{id:int}")]
-        public async Task<IActionResult> Edit([FromRoute] int id, [FromBody] UpdateDoctorRequestDto updateDoctorRequestDto)
+        public async Task<IActionResult> Edit([FromRoute] int id, [FromForm] UpdateDoctorRequestDto updateDoctorRequestDto)
         {
             var doctorDomainModel = _mapper.Map<Doctor>(updateDoctorRequestDto);
-
-            doctorDomainModel = await _unitOfWork.Doctor.UpdateAsync(id, doctorDomainModel);
 
             if (doctorDomainModel == null)
             {
                 return NotFound();
+            }
+
+            if (updateDoctorRequestDto.Image != null)
+            {
+                await _unitOfWork.Doctor.ValidateFileEdit(updateDoctorRequestDto);
+                var fileExtension = Path.GetExtension(updateDoctorRequestDto.Image.FileName);
+                doctorDomainModel.ImageFileExtension = fileExtension;
+                doctorDomainModel.ImageFileSizeInBytes = updateDoctorRequestDto.Image.Length;
+
+                doctorDomainModel.ImageFilePath = string.Empty;
+            } 
+            else
+            {
+                doctorDomainModel.ImageFileName = updateDoctorRequestDto.ImageFileName;
+            }
+
+            var updatedDoctor = await _unitOfWork.Doctor.UpdateAsync(id, doctorDomainModel);
+            if (updatedDoctor == null)
+            {
+                return NotFound();
+            }
+
+            await _unitOfWork.SaveAsync();
+
+            if (updateDoctorRequestDto.Image != null)
+            {
+                updatedDoctor = await _unitOfWork.Doctor.UploadDrImage(updatedDoctor);
+
+                await _unitOfWork.Doctor.UpdateAsync(id, updatedDoctor);
+                await _unitOfWork.SaveAsync();
             }
 
             _mapper.Map<DoctorDto>(doctorDomainModel);
