@@ -89,12 +89,15 @@ namespace HospitalMS_API.Controllers
             if (updateDoctorRequestDto.Image != null)
             {
                 await _unitOfWork.Doctor.ValidateFileEdit(updateDoctorRequestDto);
+
                 var fileExtension = Path.GetExtension(updateDoctorRequestDto.Image.FileName);
                 doctorDomainModel.ImageFileExtension = fileExtension;
                 doctorDomainModel.ImageFileSizeInBytes = updateDoctorRequestDto.Image.Length;
 
+                doctorDomainModel = await _unitOfWork.Doctor.UploadDrImage(doctorDomainModel);
+
                 doctorDomainModel.ImageFilePath = string.Empty;
-            } 
+            }
             else
             {
                 doctorDomainModel.ImageFileName = updateDoctorRequestDto.ImageFileName;
@@ -104,16 +107,6 @@ namespace HospitalMS_API.Controllers
             if (updatedDoctor == null)
             {
                 return NotFound();
-            }
-
-            await _unitOfWork.SaveAsync();
-
-            if (updateDoctorRequestDto.Image != null)
-            {
-                updatedDoctor = await _unitOfWork.Doctor.UploadDrImage(updatedDoctor);
-
-                await _unitOfWork.Doctor.UpdateAsync(id, updatedDoctor);
-                await _unitOfWork.SaveAsync();
             }
 
             _mapper.Map<DoctorDto>(doctorDomainModel);

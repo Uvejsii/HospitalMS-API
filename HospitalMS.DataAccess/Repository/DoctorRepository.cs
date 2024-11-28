@@ -40,14 +40,48 @@ namespace HospitalMS.DataAccess.Repository
                 doctorFromDb.PhoneNumber = doctor.PhoneNumber;
                 doctorFromDb.ConsultationFee = doctor.ConsultationFee;
                 doctorFromDb.isAvailable = doctor.isAvailable;
-                doctorFromDb.ImageFileName = doctor.ImageFileName;
                 if (doctor.Image != null)
                 {
+                    var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
+
+                    if (doctorFromDb.ImageFileName != doctor.ImageFileName)
+                    {
+                        var existingFilePath = Path.Combine(imagesFolderPath, $"{doctorFromDb.ImageFileName}{doctorFromDb.ImageFileExtension}");
+                        if (File.Exists(existingFilePath))
+                        {
+                            File.Delete(existingFilePath);
+                        }
+                    }
+
                     doctorFromDb.Image = doctor.Image;
                     doctorFromDb.ImageFileExtension = doctor.ImageFileExtension;
                     doctorFromDb.ImageFileSizeInBytes = doctor.ImageFileSizeInBytes;
+                    doctorFromDb.ImageFileName = doctor.ImageFileName;
+
+                    var newFilePath = Path.Combine(imagesFolderPath, $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
+                    using var stream = new FileStream(newFilePath, FileMode.Create);
+                    await doctor.Image.CopyToAsync(stream);
 
                     var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctor.ImageFileExtension}";
+                    doctorFromDb.ImageFilePath = urlFilePath;
+                }
+
+                if (doctorFromDb.ImageFileName != doctor.ImageFileName)
+                {
+                    var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
+
+                    var existingFileName = Path.GetFileName(new Uri(doctorFromDb.ImageFilePath).AbsolutePath);
+                    var existingFilePath = Path.Combine(imagesFolderPath, existingFileName);
+                    var newFileName = $"{doctor.ImageFileName}{doctorFromDb.ImageFileExtension}";
+                    var newFilePath = Path.Combine(imagesFolderPath, newFileName);
+
+                    if (File.Exists(existingFilePath) && existingFilePath != newFilePath)
+                    {
+                        File.Move(existingFilePath, newFilePath);
+                    }
+
+                    doctorFromDb.ImageFileName = doctor.ImageFileName;
+                    var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctorFromDb.ImageFileExtension}";
                     doctorFromDb.ImageFilePath = urlFilePath;
                 }
 
@@ -63,7 +97,16 @@ namespace HospitalMS.DataAccess.Repository
 
             if (doctorFromDb != null)
             {
+                var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
+                var filePath = Path.Combine(imagesFolderPath, $"{doctorFromDb.ImageFileName}{doctorFromDb.ImageFileExtension}");
+                
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+
                 _db.Doctors.Remove(doctorFromDb);
+
                 return true;
             }
 
@@ -76,12 +119,29 @@ namespace HospitalMS.DataAccess.Repository
 
             if (!string.IsNullOrEmpty(doctor.ImageFilePath))
             {
-                var existingFilePath = Path.Combine(imagesFolderPath, Path.GetFileName(doctor.ImageFilePath));
-                var newFilePath = Path.Combine(imagesFolderPath, $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
+                var existingFileName = Path.GetFileName(new Uri(doctor.ImageFilePath).AbsolutePath);
+                var existingFilePath = Path.Combine(imagesFolderPath, existingFileName);
+                var newFileName = $"{doctor.ImageFileName}{doctor.ImageFileExtension}";
+                var newFilePath = Path.Combine(imagesFolderPath, newFileName);
+
+                Console.WriteLine($"Existing File Name: {existingFileName}");
+                Console.WriteLine($"Existing File Path: {existingFilePath}");
+                Console.WriteLine($"New File Name: {newFileName}");
+                Console.WriteLine($"New File Path: {newFilePath}");
 
                 try
                 {
-                    if (existingFilePath != newFilePath)
+                    if (doctor.Image == null)
+                    {
+                        if (!string.IsNullOrEmpty(doctor.ImageFileName) && doctor.ImageFileName != existingFileName)
+                        {
+                            if (File.Exists(existingFilePath) && existingFilePath != newFilePath)
+                            {
+                                File.Move(existingFilePath, newFilePath);
+                            }
+                        }
+                    }
+                    else
                     {
                         if (File.Exists(existingFilePath))
                         {
@@ -97,22 +157,24 @@ namespace HospitalMS.DataAccess.Repository
 
             if (doctor.Image != null)
             {
-                var localFilePath = Path.Combine(imagesFolderPath, $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
+                var newLocalFilePath = Path.Combine(imagesFolderPath, $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
 
-                if (File.Exists(localFilePath))
+                if (File.Exists(newLocalFilePath))
                 {
-                    File.Delete(localFilePath);
+                    File.Delete(newLocalFilePath);
                 }
 
-                using var stream = new FileStream(localFilePath, FileMode.Create);
+                using var stream = new FileStream(newLocalFilePath, FileMode.Create);
                 await doctor.Image.CopyToAsync(stream);
             }
 
             var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctor.ImageFileExtension}";
             doctor.ImageFilePath = urlFilePath;
 
+            Console.WriteLine($"Updated ImageFilePath: {doctor.ImageFilePath}");
             return doctor;
         }
+
 
         public async Task<bool> ValidateFileUpload(AddDoctorRequestDto addDoctorRequestDto)
         {
