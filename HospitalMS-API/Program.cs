@@ -1,7 +1,10 @@
 using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository;
 using HospitalMS.DataAccess.Repository.IRepository;
+using HospitalMS.Models.Domain;
 using HospitalMS_API.Mappings;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
@@ -16,6 +19,13 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(option =>
     option.UseSqlServer(builder.Configuration.GetConnectionString("DeffaultConnection")));
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -32,6 +42,8 @@ builder.Services.AddCors(options =>
             .AllowCredentials());
 });
 
+builder.Services.AddSingleton<IEmailSender, HospitalMS.DataAccess.Data.NoOpEmailSender>();
+
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
@@ -45,6 +57,16 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+app.UseAuthentication();
+app.MapIdentityApi<ApplicationUser>();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    await SeedData.Initialize(services, userManager, roleManager);
+}
 
 app.UseStaticFiles(new StaticFileOptions
 {
