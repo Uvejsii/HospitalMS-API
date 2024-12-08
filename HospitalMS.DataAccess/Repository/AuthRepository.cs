@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,12 +17,17 @@ namespace HospitalMS.DataAccess.Repository
         private ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ClaimsPrincipal _claimsPrincipal;
 
-        public AuthRepository(ApplicationDbContext db, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager) : base(db)
+        public AuthRepository(ApplicationDbContext db, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, 
+            SignInManager<ApplicationUser> signInManager, ClaimsPrincipal claimsPrincipal) : base(db)
         {
             _db = db;
             _userManager = userManager;
             _roleManager = roleManager;
+            _signInManager = signInManager;
+            _claimsPrincipal = claimsPrincipal;
         }
 
         public async Task<bool> RegisterAdmin(RegisterAdminRequestDto registerAdminRequestDto)
@@ -87,6 +93,46 @@ namespace HospitalMS.DataAccess.Repository
             }
 
             return false;
+        }
+
+        public async Task<(bool Success, IList<string> Roles)> Login(LoginRequestDto loginRequestDto)
+        {
+            var user = await _userManager.FindByEmailAsync(loginRequestDto.Email);
+            if (user == null)
+            {
+                return (false, null);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(user, loginRequestDto.Password, loginRequestDto.RememberMe, lockoutOnFailure: false);
+            if (!result.Succeeded) 
+            { 
+                return (false, null);
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return (true, roles);
+        }
+
+        public async Task<(bool Success, string FirstName, string LastName, IList<string> Roles)> PingAuth()
+        {
+            var userId = _claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return (false, null, null, null);
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return (false, null, null, null);
+            }
+
+            var firstName = user.FirstName;
+            var lastName = user.LastName;
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return (true, firstName, lastName, roles);
         }
     }
 }
