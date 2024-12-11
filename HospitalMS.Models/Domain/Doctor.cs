@@ -15,6 +15,9 @@ namespace HospitalMS.Models.Domain
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public string? ApplicationUserId { get; set; }
+        [ForeignKey("ApplicationUserId")]
+        public ApplicationUser? ApplicationUser { get; set; }
         [NotMapped]
         public IFormFile Image { get; set; }
         public string ImageFileName { get; set; }

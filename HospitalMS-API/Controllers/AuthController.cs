@@ -2,6 +2,7 @@
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,19 @@ namespace HospitalMS_API.Controllers
             if (!registerResult)
             {
                 return BadRequest("Error Registering Patient");
+            }
+
+            return Ok(registerResult);
+        }
+
+        [HttpPost]
+        [Route("RegisterDoctor")]
+        public async Task<IActionResult> RegisterDoctor([FromBody] RegisterDoctorRequestDto registerDoctorRequestDto)
+        {
+            var registerResult = await _unitOfWork.Auth.RegisterDoctor(registerDoctorRequestDto);
+            if (!registerResult)
+            {
+                return BadRequest("Error Registering Doctor");
             }
 
             return Ok(registerResult);
@@ -70,10 +84,38 @@ namespace HospitalMS_API.Controllers
             var (success, firstName, lastName, roles) = await _unitOfWork.Auth.PingAuth();
             if (!success)
             {
-                return BadRequest("User not found");
+                return BadRequest(new { message = "User not found" });
             }
 
             return Ok(new { FirstName = firstName, LastName = lastName, Roles = roles });
+        }
+
+        [HttpGet]
+        [Route("GetLoggedInDoctor")]
+        public async Task<IActionResult> GetLoggedInDoctor()
+        {
+            var userId = await _unitOfWork.Auth.GetUserId();
+            if (userId == null)
+            {
+                return BadRequest("DoctorId Not Found");
+            }
+
+            var doctor = await _unitOfWork.Doctor.GetAsync(d => d.ApplicationUserId == userId, includeProperties: "Departament,ApplicationUser");
+
+            return Ok(doctor);
+        }
+
+        [HttpPost]
+        [Route("Logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var result = await _unitOfWork.Auth.Logout();
+            if (!result)
+            {
+                return BadRequest("Couldnt Logout");
+            }
+
+            return Ok();
         }
     }
 }

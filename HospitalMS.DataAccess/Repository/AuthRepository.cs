@@ -60,9 +60,34 @@ namespace HospitalMS.DataAccess.Repository
             return false;
         }
 
-        public Task<bool> RegisterDoctor()
+        public async Task<bool> RegisterDoctor(RegisterDoctorRequestDto registerDoctorRequestDto)
         {
-            throw new NotImplementedException();
+            if (registerDoctorRequestDto.Password != registerDoctorRequestDto.ConfirmPassword)
+            {
+                return false;
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = registerDoctorRequestDto.Email,
+                Email = registerDoctorRequestDto.Email,
+                FirstName = registerDoctorRequestDto.FirstName,
+                LastName = registerDoctorRequestDto.LastName,
+            };
+
+            var result = await _userManager.CreateAsync(user, registerDoctorRequestDto.Password);
+            if (!result.Succeeded)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(registerDoctorRequestDto.Role) && await _roleManager.RoleExistsAsync(registerDoctorRequestDto.Role))
+            {
+                await _userManager.AddToRoleAsync(user, registerDoctorRequestDto.Role);
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<bool> RegisterPatient(RegisterPatientRequestDto registerPatientRequestDto)
@@ -133,6 +158,23 @@ namespace HospitalMS.DataAccess.Repository
             var roles = await _userManager.GetRolesAsync(user);
 
             return (true, firstName, lastName, roles);
+        }
+
+        public async Task<string> GetUserId()
+        {
+            var userId = _claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return null;
+            }
+
+            return userId;
+        }
+
+        public async Task<bool> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return true;
         }
     }
 }

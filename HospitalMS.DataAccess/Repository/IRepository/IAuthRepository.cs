@@ -11,9 +11,11 @@ namespace HospitalMS.DataAccess.Repository.IRepository
     public interface IAuthRepository : IRepository<ApplicationUser>
     {
         Task<bool> RegisterPatient(RegisterPatientRequestDto registerUserRequestDto);
-        Task<bool> RegisterDoctor();
+        Task<bool> RegisterDoctor(RegisterDoctorRequestDto registerDoctorRequestDto);
         Task<bool> RegisterAdmin(RegisterAdminRequestDto registerAdminRequestDto);
         Task<(bool Success, IList<string> Roles)> Login(LoginRequestDto loginRequestDto);
         Task<(bool Success, string FirstName, string LastName, IList<string> Roles)> PingAuth();
+        Task<string> GetUserId();
+        Task<bool> Logout();
     }
 }
