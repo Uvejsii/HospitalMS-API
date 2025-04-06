@@ -100,9 +100,9 @@ namespace HospitalMS_API.Controllers
                 return BadRequest("DoctorId Not Found");
             }
 
-            var doctor = await _unitOfWork.Doctor.GetAsync(d => d.ApplicationUserId == userId, includeProperties: "Departament,ApplicationUser");
+            var doctorDomainModel = await _unitOfWork.Doctor.GetAsync(d => d.ApplicationUserId == userId, includeProperties: "Departament,ApplicationUser");
 
-            return Ok(doctor);
+            return Ok(_mapper.Map<LoggedInDoctorDto>(doctorDomainModel));
         }
 
         [HttpPost]
