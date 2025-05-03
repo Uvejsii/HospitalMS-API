@@ -14,7 +14,8 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         Task<bool> RegisterDoctor(RegisterDoctorRequestDto registerDoctorRequestDto);
         Task<bool> RegisterAdmin(RegisterAdminRequestDto registerAdminRequestDto);
         Task<(bool Success, IList<string> Roles)> Login(LoginRequestDto loginRequestDto);
-        Task<(bool Success, string FirstName, string LastName, IList<string> Roles)> PingAuth();
+        Task<(bool Success, string FirstName, string LastName, IList<string> Roles, string UserId)> PingAuth();
+        Task<bool> ResetPasswordCustom(AuthRequestDto resetPasswordRequestDto);
         Task<string> GetUserId();
         Task<bool> Logout();
     }

@@ -2,6 +2,7 @@ using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository;
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
+using HospitalMS_API.Hubs;
 using HospitalMS_API.Mappings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -51,6 +52,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IEmailSender, HospitalMS.DataAccess.Data.NoOpEmailSender>();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 app.UseCors("AllowFrontend");
@@ -66,6 +69,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.UseAuthentication();
 app.MapIdentityApi<ApplicationUser>();
+app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<ChatHub>("/chatHub");
 
 using (var scope = app.Services.CreateScope())
 {

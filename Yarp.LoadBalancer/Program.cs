@@ -9,7 +9,7 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
-    
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

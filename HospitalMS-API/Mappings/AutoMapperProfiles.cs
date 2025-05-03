@@ -19,6 +19,14 @@ namespace HospitalMS_API.Mappings
             CreateMap<RegisterPatientRequestDto, ApplicationUser>().ReverseMap();
 
             CreateMap<LoggedInDoctorDto, Doctor>().ReverseMap();
+
+            CreateMap<AllUsersDto, ApplicationUser>().ReverseMap();
+
+            CreateMap<ChatMessage, ChatMessageResponseDto>().ReverseMap();
+            CreateMap<SendMessageRequestDto, ChatMessage>()
+                .ForMember(dest => dest.SentAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsRead, opt => opt.Ignore())
+                .ReverseMap();
         }
     }
 }

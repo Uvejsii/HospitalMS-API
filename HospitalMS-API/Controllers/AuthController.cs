@@ -2,10 +2,12 @@
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
+using HospitalMS_API.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace HospitalMS_API.Controllers
@@ -16,11 +18,13 @@ namespace HospitalMS_API.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public AuthController(IUnitOfWork unitOfWork, IMapper mapper)
+        public AuthController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub> hubContext)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -81,13 +85,25 @@ namespace HospitalMS_API.Controllers
         [Route("PingAuth")]
         public async Task<IActionResult> PingAuth()
         {
-            var (success, firstName, lastName, roles) = await _unitOfWork.Auth.PingAuth();
+            var (success, firstName, lastName, roles, userID) = await _unitOfWork.Auth.PingAuth();
             if (!success)
             {
                 return BadRequest(new { message = "User not found" });
             }
 
-            return Ok(new { FirstName = firstName, LastName = lastName, Roles = roles });
+            return Ok(new { FirstName = firstName, LastName = lastName, Roles = roles, UserId = userID });
+        }
+
+        [HttpPost]
+        [Route("ResetPasswordCustom")]
+        public async Task<IActionResult> ResetPasswordCustom([FromBody] AuthRequestDto resetPasswordRequestDto)
+        {
+            var result = await _unitOfWork.Auth.ResetPasswordCustom(resetPasswordRequestDto);
+            if (!result)
+            {
+                return BadRequest("Error Changing Password");
+            }
+            return Ok(result);
         }
 
         [HttpGet]
@@ -116,6 +132,98 @@ namespace HospitalMS_API.Controllers
             }
 
             return Ok();
+        }
+
+        [HttpPost]
+        [Route("SendNotificationToAll")]
+        public async Task<IActionResult> SendNotificationToAll([FromBody] NotificationRequestDto notificationRequestDto)
+        {
+            if (string.IsNullOrEmpty(notificationRequestDto.Message))
+            {
+                return BadRequest(new { message = "Message cannot be empty." });
+            }
+
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", notificationRequestDto.Message);
+
+            return Ok(new { message = "Notification sent successfully to all users." });
+        }
+
+        [HttpPost]
+        [Route("SendNotificationToAllDoctors")]
+        public async Task<IActionResult> SendNotificationToAllDoctors([FromBody] NotificationRequestDto notificationRequestDto)
+        {
+            if (string.IsNullOrEmpty(notificationRequestDto.Message))
+            {
+                return BadRequest(new { message = "Message cannot be empty." });
+            }
+
+            await _hubContext.Clients.Group("Doctors").SendAsync("ReceiveMessage", notificationRequestDto.Message);
+
+            return Ok(new { message = "Notification sent successfully to doctors." });
+        }
+        
+        [HttpPost]
+        [Route("SendNotificationToAllAdmins")]
+        public async Task<IActionResult> SendNotificationToAllAdmins([FromBody] NotificationRequestDto notificationRequestDto)
+        {
+            if (string.IsNullOrEmpty(notificationRequestDto.Message))
+            {
+                return BadRequest(new { message = "Message cannot be empty." });
+            }
+
+            await _hubContext.Clients.Group("Admins").SendAsync("ReceiveMessage", notificationRequestDto.Message);
+
+            return Ok(new { message = "Notification sent successfully to admins." });
+        }
+
+        [HttpPost]
+        [Route("SendNotificationByEmail")]
+        public async Task<IActionResult> SendNotificationByEmail([FromBody] NotificationRequestDto notificationRequestDto)
+        {
+            if (string.IsNullOrEmpty(notificationRequestDto.Email) || string.IsNullOrEmpty(notificationRequestDto.Message))
+            {
+                return BadRequest(new { message = "Email and message are required." });
+            }
+
+            var connectionId = NotificationHub.GetConnectionId(notificationRequestDto.Email);
+
+            if (string.IsNullOrEmpty(connectionId))
+            {
+                return NotFound(new { message = "User with this email is not connected." });
+            }
+
+            await _hubContext.Clients.Client(connectionId).SendAsync("ReceiveMessage", notificationRequestDto.Message);
+
+            return Ok(new { message = $"Notification sent to {notificationRequestDto.Email}" });
+        }
+
+        [HttpGet]
+        [Route("GetAllUsers")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _unitOfWork.Auth.GetAllAsync();
+
+            if (users == null || !users.Any())
+            {
+                return NotFound(new { message = "No users found." });
+            }
+
+            return Ok(_mapper.Map<List<AllUsersDto>>(users));
+        }
+
+        [HttpGet]
+        [Route("GetUsersByName/{name}")]
+        public async Task<IActionResult> GetUsersByName([FromRoute] string name)
+        {
+            var users = await _unitOfWork.Auth.GetAllAsync(u => u.FirstName.ToLower().Contains(name.ToLower()));
+
+
+            if (users == null || !users.Any())
+            {
+                return NotFound(new { message = "No users found." });
+            }
+
+            return Ok(_mapper.Map<List<AllUsersDto>>(users));
         }
     }
 }

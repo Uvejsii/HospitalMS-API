@@ -11,6 +11,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         IDoctorRepository Doctor { get; }
         IDepartamentRepository Departament { get; }
         IAuthRepository Auth { get; }
+        IChatRepository Chat { get; }
 
         Task SaveAsync();
     }

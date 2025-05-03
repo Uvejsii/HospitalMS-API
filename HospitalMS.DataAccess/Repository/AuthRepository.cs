@@ -3,6 +3,7 @@ using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,25 +140,48 @@ namespace HospitalMS.DataAccess.Repository
             return (true, roles);
         }
 
-        public async Task<(bool Success, string FirstName, string LastName, IList<string> Roles)> PingAuth()
+        public async Task<(bool Success, string FirstName, string LastName, IList<string> Roles, string UserId)> PingAuth()
         {
             var userId = _claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return (false, null, null, null);
+                return (false, null, null, null, null);
             }
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return (false, null, null, null);
+                return (false, null, null, null, null);
             }
 
             var firstName = user.FirstName;
             var lastName = user.LastName;
             var roles = await _userManager.GetRolesAsync(user);
+            var userID = userId;
 
-            return (true, firstName, lastName, roles);
+            return (true, firstName, lastName, roles, userID);
+        }
+
+        public async Task<bool> ResetPasswordCustom(AuthRequestDto resetPasswordRequestDto)
+        {
+            var email = resetPasswordRequestDto.Email;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return false;
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return false;
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var newPassword = $"{user.FirstName}{user.LastName}123!";
+
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+            return result.Succeeded;
         }
 
         public async Task<string> GetUserId()
