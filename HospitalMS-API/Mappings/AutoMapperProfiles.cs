@@ -11,6 +11,7 @@ namespace HospitalMS_API.Mappings
             CreateMap<Doctor, DoctorDto>().ReverseMap();
             CreateMap<AddDoctorRequestDto, Doctor>().ReverseMap();
             CreateMap<UpdateDoctorRequestDto, Doctor>().ReverseMap();
+            CreateMap<RegisterDoctorFullRequestDto, Doctor>().ReverseMap();
 
             CreateMap<Departament, DepartamentDto>().ReverseMap();
             CreateMap<AddDepartamentRequestDto, Departament>().ReverseMap();
@@ -27,6 +28,12 @@ namespace HospitalMS_API.Mappings
                 .ForMember(dest => dest.SentAt, opt => opt.Ignore())
                 .ForMember(dest => dest.IsRead, opt => opt.Ignore())
                 .ReverseMap();
+
+            CreateMap<DoctorReview, DoctorReviewDto>().ReverseMap();
+            CreateMap<AddDoctorReviewRequestDto, DoctorReview>().ReverseMap();
+            CreateMap<UpdateDoctorReviewRequestDto, DoctorReview>().ReverseMap();
+
+            CreateMap<DoctorReviewerDto, ApplicationUser>().ReverseMap();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         Task<Doctor?> UpdateAsync(int id, Doctor doctor);
         Task<bool> DeleteDoc(int? id);
         Task<Doctor?> UploadDrImage(Doctor doctor);
-        Task<bool> ValidateFileUpload(AddDoctorRequestDto addDoctorRequestDto);
+        Task<bool> ValidateFileUpload(RegisterDoctorFullRequestDto registerDoctorFullRequestDto);
         Task<bool> ValidateFileEdit(UpdateDoctorRequestDto updateDoctorRequestDto);
     }
 }

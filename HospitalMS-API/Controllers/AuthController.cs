@@ -28,6 +28,24 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
+        {
+            var res = await _unitOfWork.Auth.Login(loginRequestDto);
+            if (res == null || !res.Success)
+            {
+                return BadRequest(res?.ErrorMessage ?? "Error Logging in");
+            }
+
+            return Ok(new
+            {
+                res.Email,
+                res.Role,
+                res.Token
+            });
+        }
+
+        [HttpPost]
         [Route("RegisterPatient")]
         public async Task<IActionResult> RegisterPatient([FromBody] RegisterPatientRequestDto registerPatientRequestDto)
         {
@@ -43,16 +61,40 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpPost]
-        [Route("RegisterDoctor")]
-        public async Task<IActionResult> RegisterDoctor([FromBody] RegisterDoctorRequestDto registerDoctorRequestDto)
+        [Route("RegisterDrFull")]
+        public async Task<IActionResult> RegisterDrFull([FromForm] RegisterDoctorFullRequestDto registerDoctorFullRequestDto)
         {
-            var registerResult = await _unitOfWork.Auth.RegisterDoctor(registerDoctorRequestDto);
-            if (!registerResult)
+            var (success, appUserId) = await _unitOfWork.Auth.RegisterDoctor(registerDoctorFullRequestDto);
+            if (success == false || string.IsNullOrEmpty(appUserId))
             {
                 return BadRequest("Error Registering Doctor");
             }
 
-            return Ok(registerResult);
+            if (registerDoctorFullRequestDto.Image == null)
+            {
+                return BadRequest(new { message = "Image file is required." });
+            }
+
+            var doctorDomainModel = _mapper.Map<Doctor>(registerDoctorFullRequestDto);
+            var fileExtension = Path.GetExtension(registerDoctorFullRequestDto.Image.FileName);
+            if (string.IsNullOrEmpty(fileExtension))
+            {
+                return BadRequest(new { message = "File extension is missing or invalid." });
+            }
+
+            await _unitOfWork.Doctor.ValidateFileUpload(registerDoctorFullRequestDto);
+
+            doctorDomainModel.Image = registerDoctorFullRequestDto.Image;
+            doctorDomainModel.ImageFileExtension = fileExtension;
+            doctorDomainModel.ImageFileSizeInBytes = registerDoctorFullRequestDto.Image.Length;
+            doctorDomainModel.ImageFileName = registerDoctorFullRequestDto.ImageFileName;
+            doctorDomainModel.ApplicationUserId = appUserId;
+
+            await _unitOfWork.Doctor.CreateAsync(doctorDomainModel);
+            await _unitOfWork.Doctor.UploadDrImage(doctorDomainModel);
+            await _unitOfWork.SaveAsync();
+
+            return Ok();
         }
 
         [HttpPost]
@@ -66,19 +108,6 @@ namespace HospitalMS_API.Controllers
             }
 
             return Ok(registerResult);
-        }
-
-        [HttpPost]
-        [Route("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
-        {
-            var (success, roles) = await _unitOfWork.Auth.Login(loginRequestDto);
-            if (!success)
-            {
-                return BadRequest("Error Logging in");
-            }
-
-            return Ok(new { Message = "Login successful", Roles = roles });
         }
 
         [HttpGet]
@@ -110,16 +139,36 @@ namespace HospitalMS_API.Controllers
         [Route("GetLoggedInDoctor")]
         public async Task<IActionResult> GetLoggedInDoctor()
         {
-            var userId = await _unitOfWork.Auth.GetUserId();
+            var token = GetJwtTokenFromHeader();
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest("Token not found in Authorization header.");
+            }
+
+            var userId = await _unitOfWork.Auth.GetUserIdFromToken(token);
             if (userId == null)
             {
                 return BadRequest("DoctorId Not Found");
             }
 
-            var doctorDomainModel = await _unitOfWork.Doctor.GetAsync(d => d.ApplicationUserId == userId, includeProperties: "Departament,ApplicationUser");
+            var doctorDomainModel = await _unitOfWork.Doctor.GetAsync(
+                d => d.ApplicationUserId == userId,
+                includeProperties: "Departament,ApplicationUser"
+            );
 
             return Ok(_mapper.Map<LoggedInDoctorDto>(doctorDomainModel));
         }
+
+        private string? GetJwtTokenFromHeader()
+        {
+            var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+            if (authHeader != null && authHeader.StartsWith("Bearer "))
+            {
+                return authHeader.Substring("Bearer ".Length).Trim();
+            }
+            return null;
+        }
+
 
         [HttpPost]
         [Route("Logout")]

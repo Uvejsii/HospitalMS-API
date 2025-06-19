@@ -22,41 +22,11 @@ namespace HospitalMS_API.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost]
-        [Route("CreateDoctor")]
-        public async Task<IActionResult> Create([FromForm] AddDoctorRequestDto addDoctorRequestDto)
-        {
-            if (addDoctorRequestDto.Image == null)
-            {
-                return BadRequest(new { message = "Image file is required." });
-            }
-
-            var doctorDomaniModel = _mapper.Map<Doctor>(addDoctorRequestDto);
-            var fileExtension = Path.GetExtension(addDoctorRequestDto.Image.FileName);
-            if (string.IsNullOrEmpty(fileExtension))
-            {
-                return BadRequest(new { message = "File extension is missing or invalid." });
-            }
-
-            await _unitOfWork.Doctor.ValidateFileUpload(addDoctorRequestDto);
-            
-            doctorDomaniModel.Image = addDoctorRequestDto.Image;
-            doctorDomaniModel.ImageFileExtension = fileExtension;
-            doctorDomaniModel.ImageFileSizeInBytes = addDoctorRequestDto.Image.Length;
-            doctorDomaniModel.ImageFileName = addDoctorRequestDto.ImageFileName;
-
-            await _unitOfWork.Doctor.CreateAsync(doctorDomaniModel);
-            await _unitOfWork.Doctor.UploadDrImage(doctorDomaniModel);
-            await _unitOfWork.SaveAsync();
-
-            return Ok();
-        }
-
         [HttpGet]
         [Route("GetAllDoctors")]
         public async Task<IActionResult> GetAll()
         {
-            var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(includeProperties: "Departament");
+            var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(includeProperties: "Departament,Reviews.Reviewer");
 
             return Ok(_mapper.Map<List<DoctorDto>>(doctorsDomainModel));
         }

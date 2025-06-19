@@ -124,11 +124,6 @@ namespace HospitalMS.DataAccess.Repository
                 var newFileName = $"{doctor.ImageFileName}{doctor.ImageFileExtension}";
                 var newFilePath = Path.Combine(imagesFolderPath, newFileName);
 
-                Console.WriteLine($"Existing File Name: {existingFileName}");
-                Console.WriteLine($"Existing File Path: {existingFilePath}");
-                Console.WriteLine($"New File Name: {newFileName}");
-                Console.WriteLine($"New File Path: {newFilePath}");
-
                 try
                 {
                     if (doctor.Image == null)
@@ -176,16 +171,16 @@ namespace HospitalMS.DataAccess.Repository
         }
 
 
-        public async Task<bool> ValidateFileUpload(AddDoctorRequestDto addDoctorRequestDto)
+        public async Task<bool> ValidateFileUpload(RegisterDoctorFullRequestDto registerDoctorFullRequestDto)
         {
             var allowedExtensions = new string[] { ".jpg", ".jpeg", ".png" };
 
-            if (!allowedExtensions.Contains(Path.GetExtension(addDoctorRequestDto.Image.FileName)))
+            if (!allowedExtensions.Contains(Path.GetExtension(registerDoctorFullRequestDto.Image.FileName)))
             {
                 return await Task.FromResult(false);
             }
 
-            if (addDoctorRequestDto.Image.Length > 10485760)
+            if (registerDoctorFullRequestDto.Image.Length > 10485760)
             {
                 return await Task.FromResult(false);
 

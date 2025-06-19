@@ -10,13 +10,14 @@ namespace HospitalMS.DataAccess.Repository.IRepository
 {
     public interface IAuthRepository : IRepository<ApplicationUser>
     {
+        string GenerateJWTToken(ApplicationUser user, List<string> roles);
+        Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto);
         Task<bool> RegisterPatient(RegisterPatientRequestDto registerUserRequestDto);
-        Task<bool> RegisterDoctor(RegisterDoctorRequestDto registerDoctorRequestDto);
+        Task<(bool Success, string AppUserId)> RegisterDoctor(RegisterDoctorFullRequestDto registerDoctorFullRequestDto);
         Task<bool> RegisterAdmin(RegisterAdminRequestDto registerAdminRequestDto);
-        Task<(bool Success, IList<string> Roles)> Login(LoginRequestDto loginRequestDto);
         Task<(bool Success, string FirstName, string LastName, IList<string> Roles, string UserId)> PingAuth();
         Task<bool> ResetPasswordCustom(AuthRequestDto resetPasswordRequestDto);
-        Task<string> GetUserId();
+        Task<string> GetUserIdFromToken(string token);
         Task<bool> Logout();
     }
 }

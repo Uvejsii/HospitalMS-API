@@ -21,5 +21,6 @@ namespace HospitalMS.Models.DTO
         public decimal ConsultationFee { get; set; }
         public bool isAvailable { get; set; }
         public DepartamentDto Departament { get; set; }
+        public ICollection<DoctorReviewDto> Reviews { get; set; } = new List<DoctorReviewDto>();
     }
 }

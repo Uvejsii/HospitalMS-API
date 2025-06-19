@@ -33,5 +33,6 @@ namespace HospitalMS.Models.Domain
         public decimal ConsultationFee { get; set; }
         public DateTime JoinedDate { get; set; } = DateTime.Now;
         public bool isAvailable { get; set; }
+        public ICollection<DoctorReview> Reviews { get; set; } = new List<DoctorReview>();
     }
 }

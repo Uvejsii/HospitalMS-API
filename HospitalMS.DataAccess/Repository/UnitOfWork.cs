@@ -4,6 +4,7 @@ using HospitalMS.Models.Domain;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,15 +22,17 @@ namespace HospitalMS.DataAccess.Repository
         public IDepartamentRepository Departament { get; private set; }
         public IAuthRepository Auth { get; private set; }
         public IChatRepository Chat { get; private set; }
+        public IDoctorReviewRepository DoctorReview { get; private set; }
         public UnitOfWork(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, 
             UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager,
-            ClaimsPrincipal claimsPrincipal)
+            ClaimsPrincipal claimsPrincipal, IConfiguration configuration)
         {
             _db = db;
             Doctor = new DoctorRepository(_db, webHostEnvironment, httpContextAccessor);
             Departament = new DepartamentRepository(_db);
-            Auth = new AuthRepository(_db, userManager, roleManager, signInManager, claimsPrincipal);
+            Auth = new AuthRepository(_db, userManager, roleManager, signInManager, claimsPrincipal, configuration);
             Chat = new ChatRepository(_db);
+            DoctorReview = new DoctorReviewRepository(_db);
         }
 
         public async Task SaveAsync() 
