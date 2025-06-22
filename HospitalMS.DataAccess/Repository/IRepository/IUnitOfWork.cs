@@ -13,6 +13,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         IAuthRepository Auth { get; }
         IChatRepository Chat { get; }
         IDoctorReviewRepository DoctorReview { get; }
+        IBookingRepository Booking { get; }
 
         Task SaveAsync();
     }

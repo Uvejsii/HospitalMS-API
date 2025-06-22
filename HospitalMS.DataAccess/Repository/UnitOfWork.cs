@@ -23,6 +23,7 @@ namespace HospitalMS.DataAccess.Repository
         public IAuthRepository Auth { get; private set; }
         public IChatRepository Chat { get; private set; }
         public IDoctorReviewRepository DoctorReview { get; private set; }
+        public IBookingRepository Booking { get; private set; }
         public UnitOfWork(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, 
             UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager,
             ClaimsPrincipal claimsPrincipal, IConfiguration configuration)
@@ -33,6 +34,7 @@ namespace HospitalMS.DataAccess.Repository
             Auth = new AuthRepository(_db, userManager, roleManager, signInManager, claimsPrincipal, configuration);
             Chat = new ChatRepository(_db);
             DoctorReview = new DoctorReviewRepository(_db);
+            Booking = new BookingRepository(_db);
         }
 
         public async Task SaveAsync() 

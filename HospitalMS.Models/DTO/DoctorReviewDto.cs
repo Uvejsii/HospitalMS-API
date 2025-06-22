@@ -13,6 +13,7 @@ namespace HospitalMS.Models.DTO
         public int Stars { get; set; }
         public string Comment { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
         public DoctorReviewerDto Reviewer { get; set; }
     }
 }

@@ -25,6 +25,8 @@ namespace HospitalMS.DataAccess.Repository
             {  
                 reviewFromDb.Stars = updateDoctorReviewRequestDto.Stars;
                 reviewFromDb.Comment = updateDoctorReviewRequestDto.Comment;
+                reviewFromDb.UpdatedAt = DateTime.UtcNow;
+
                 return reviewFromDb;
             }
             return null;

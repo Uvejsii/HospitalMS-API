@@ -21,13 +21,37 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpGet]
+        [Route("GetAllDoctorReviews")]
+        public async Task<IActionResult> GetAllDoctorReviews()
+        {
+            var reviewsModel = await _unitOfWork.DoctorReview.GetAllAsync(includeProperties: "Reviewer,Doctor");
+
+            if (reviewsModel == null || !reviewsModel.Any())
+            {
+                return Ok(new List<DoctorReviewDto>());
+            }
+
+            var reviews = _mapper.Map<List<DoctorReviewDto>>(reviewsModel);
+
+            if (!reviews.Any())
+            {
+                return Ok(new List<DoctorReviewDto>());
+            }
+
+            return Ok(reviews);
+        }
+
+        [HttpGet]
         [Route("GetDoctorReviewsByDrId/{doctorId:int}")]
         public async Task<IActionResult> GetAllDoctorReviews([FromRoute] int doctorId)
         {
-            var reviews = await _unitOfWork.DoctorReview.GetAllAsync(dr => dr.DoctorId == doctorId, includeProperties: "Reviewer");
+            var reviewsModel = await _unitOfWork.DoctorReview.GetAllAsync(dr => dr.DoctorId == doctorId, includeProperties: "Reviewer");
+
+            var reviews = _mapper.Map<List<DoctorReviewDto>>(reviewsModel);
+
             if (!reviews.Any())
             {
-                return Ok(new List<DoctorReview>());
+                return Ok(new List<DoctorReviewDto>());
             }
 
             return Ok(reviews);

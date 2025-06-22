@@ -35,7 +35,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetDoctorById/{id:int}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var doctorDomainModel = await _unitOfWork.Doctor.GetAsync(d => d.Id == id, includeProperties: "Departament");
+            var doctorDomainModel = await _unitOfWork.Doctor.GetAsync(d => d.Id == id, includeProperties: "Departament,Reviews.Reviewer");
 
             if (doctorDomainModel == null)
             {

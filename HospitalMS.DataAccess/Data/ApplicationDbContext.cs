@@ -21,6 +21,6 @@ namespace HospitalMS.DataAccess.Data
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<DoctorReview> DoctorReviews { get; set; }
-        //public DbSet<Booking> Bookings { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
     }
 }

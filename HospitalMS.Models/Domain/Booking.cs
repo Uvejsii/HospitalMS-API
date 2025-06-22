@@ -16,9 +16,13 @@ namespace HospitalMS.Models.Domain
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public decimal Price { get; set; }
+        public string ContactPhoneNumber { get; set; }
         public BookingStatus Status { get; set; }
         public string UserId { get; set; }
         [ForeignKey("UserId")]
         public ApplicationUser User { get; set; }
+        public int DoctorId { get; set; }
+        [ForeignKey("DoctorId")]
+        public Doctor Doctor { get; set; }
     }
 }
