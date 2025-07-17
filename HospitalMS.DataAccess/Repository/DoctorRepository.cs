@@ -40,6 +40,7 @@ namespace HospitalMS.DataAccess.Repository
                 doctorFromDb.PhoneNumber = doctor.PhoneNumber;
                 doctorFromDb.ConsultationFee = doctor.ConsultationFee;
                 doctorFromDb.isAvailable = doctor.isAvailable;
+                doctorFromDb.Languages = doctor.Languages;
                 if (doctor.Image != null)
                 {
                     var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");

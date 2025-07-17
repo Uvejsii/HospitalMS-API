@@ -39,7 +39,10 @@ namespace HospitalMS_API.Controllers
 
             return Ok(new
             {
+                res.FirstName,
+                res.LastName,
                 res.Email,
+                res.Id,
                 res.Role,
                 res.Token
             });

@@ -27,8 +27,24 @@ namespace HospitalMS_API.Controllers
         public async Task<IActionResult> GetAll()
         {
             var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(includeProperties: "Departament,Reviews.Reviewer");
+            var doctorDtos = _mapper.Map<List<DoctorDto>>(doctorsDomainModel);
 
-            return Ok(_mapper.Map<List<DoctorDto>>(doctorsDomainModel));
+            foreach (var dto in doctorDtos)
+            {
+                var domainDoctor = doctorsDomainModel.FirstOrDefault(d => d.Id == dto.Id);
+                if (domainDoctor != null && domainDoctor.Reviews != null && domainDoctor.Reviews.Any())
+                {
+                    dto.TotalReviewsCount = domainDoctor.Reviews.Count;
+                    dto.ReviewStarAverage = Math.Round(domainDoctor.Reviews.Average(r => r.Stars), 2);
+                }
+                else
+                {
+                    dto.TotalReviewsCount = 0;
+                    dto.ReviewStarAverage = 0;
+                }
+            }
+
+            return Ok(doctorDtos);
         }
 
         [HttpGet]

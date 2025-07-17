@@ -42,8 +42,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpGet]
-        [Route("GetDoctorReviewsByDrId/{doctorId:int}")]
-        public async Task<IActionResult> GetAllDoctorReviews([FromRoute] int doctorId)
+        [Route("GetDoctorReviewsByDrId")]
+        public async Task<IActionResult> GetDoctorReviewsByDrId([FromQuery] int doctorId)
         {
             var reviewsModel = await _unitOfWork.DoctorReview.GetAllAsync(dr => dr.DoctorId == doctorId, includeProperties: "Reviewer");
 
@@ -80,8 +80,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpPut]
-        [Route("UpdateDoctorReview/{id:int}")]
-        public async Task<IActionResult> UpdateDoctorReview([FromRoute] int id, [FromBody] UpdateDoctorReviewRequestDto updateDoctorReviewRequestDto)
+        [Route("UpdateDoctorReview")]
+        public async Task<IActionResult> UpdateDoctorReview([FromQuery] int id, [FromBody] UpdateDoctorReviewRequestDto updateDoctorReviewRequestDto)
         {
             if (updateDoctorReviewRequestDto == null)
             {
@@ -101,8 +101,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpDelete]
-        [Route("DeleteDoctorReview/{reviewId:int}/{doctorId:int}")]
-        public async Task<IActionResult> DeleteDoctorReview([FromRoute] int reviewId, [FromRoute] int doctorId)
+        [Route("DeleteDoctorReview")]
+        public async Task<IActionResult> DeleteDoctorReview([FromQuery] int reviewId, [FromQuery] int doctorId)
         {
             var review = await _unitOfWork.DoctorReview.GetAsync(r => r.Id == reviewId && r.DoctorId == doctorId);
             if (review == null)

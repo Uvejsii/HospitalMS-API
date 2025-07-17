@@ -30,5 +30,7 @@ namespace HospitalMS.Models.DTO
         public IFormFile Image { get; set; }
         [Required]
         public string ImageFileName { get; set; }
+        [Required]
+        public string Languages { get; set; }
     }
 }

@@ -13,8 +13,8 @@ namespace HospitalMS.Models.Domain
         [Key]
         public int Id { get; set; }
         public string Notes { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTimeOffset StartTime { get; set; }
+        public DateTimeOffset EndTime { get; set; }
         public decimal Price { get; set; }
         public string ContactPhoneNumber { get; set; }
         public BookingStatus Status { get; set; }

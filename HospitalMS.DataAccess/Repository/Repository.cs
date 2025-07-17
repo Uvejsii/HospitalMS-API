@@ -56,7 +56,7 @@ namespace HospitalMS.DataAccess.Repository
                 }
             }
 
-            return await query.ToListAsync();
+            return await query.AsNoTracking().OrderDescending().ToListAsync();
         }
 
         public async Task<T> GetAsync(Expression<Func<T, bool>> filter, string? includeProperties = null)

@@ -10,8 +10,8 @@ namespace HospitalMS.Models.DTO
     public class AddBookingRequestDto
     {
         public string Notes { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTimeOffset StartTime { get; set; }
+        public DateTimeOffset EndTime { get; set; }
         public decimal Price { get; set; }
         public string ContactPhoneNumber { get; set; }
         public int DoctorId { get; set; }

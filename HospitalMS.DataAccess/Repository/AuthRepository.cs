@@ -57,8 +57,11 @@ namespace HospitalMS.DataAccess.Repository
 
                         var response = new LoginResponseDto
                         {
+                            FirstName = user.FirstName ?? string.Empty,
+                            LastName = user.LastName ?? string.Empty,
                             Email = user.Email ?? string.Empty,
                             Role = string.Join(",", roles),
+                            Id = user.Id,
                             Token = jwtToken,
                             Success = true,
                         };

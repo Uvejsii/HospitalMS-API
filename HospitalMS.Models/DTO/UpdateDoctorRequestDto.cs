@@ -20,5 +20,6 @@ namespace HospitalMS.Models.DTO
         public int DepartamentId { get; set; }
         public IFormFile? Image { get; set; }
         public string ImageFileName { get; set; }
+        public string Languages { get; set; }
     }
 }

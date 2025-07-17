@@ -34,6 +34,7 @@ namespace HospitalMS.Models.DTO
         public string Password { get; set; }
         [Required]
         public string ConfirmPassword { get; set; }
+        public string Languages { get; set; }
         [JsonIgnore]
         public string Role { get; set; } = "Doctor";
     }

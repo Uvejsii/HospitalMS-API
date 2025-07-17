@@ -20,7 +20,10 @@ namespace HospitalMS.Models.DTO
         public string PhoneNumber { get; set; }
         public decimal ConsultationFee { get; set; }
         public bool isAvailable { get; set; }
+        public string Languages { get; set; }
         public DepartamentDto Departament { get; set; }
+        public int TotalReviewsCount { get; set; }
+        public double ReviewStarAverage { get; set; }
         public ICollection<DoctorReviewDto> Reviews { get; set; } = new List<DoctorReviewDto>();
     }
 }

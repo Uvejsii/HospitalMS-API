@@ -32,6 +32,7 @@ namespace HospitalMS.Models.Domain
         public string PhoneNumber { get; set; }
         public decimal ConsultationFee { get; set; }
         public DateTime JoinedDate { get; set; } = DateTime.Now;
+        public string? Languages { get; set; }
         public bool isAvailable { get; set; }
         public ICollection<DoctorReview> Reviews { get; set; } = new List<DoctorReview>();
     }
