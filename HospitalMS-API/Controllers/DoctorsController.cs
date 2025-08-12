@@ -24,9 +24,10 @@ namespace HospitalMS_API.Controllers
 
         [HttpGet]
         [Route("GetAllDoctors")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery]int pageNumber, int pageSize)
         {
-            var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(includeProperties: "Departament,Reviews.Reviewer");
+            var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(null,
+                includeProperties: "Departament,Reviews.Reviewer", pageNumber, pageSize);
             var doctorDtos = _mapper.Map<List<DoctorDto>>(doctorsDomainModel);
 
             foreach (var dto in doctorDtos)
@@ -48,8 +49,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpGet]
-        [Route("GetDoctorById/{id:int}")]
-        public async Task<IActionResult> GetById([FromRoute] int id)
+        [Route("GetDoctorById")]
+        public async Task<IActionResult> GetById([FromQuery] int id)
         {
             var doctorDomainModel = await _unitOfWork.Doctor.GetAsync(d => d.Id == id, includeProperties: "Departament,Reviews.Reviewer");
 
@@ -58,44 +59,39 @@ namespace HospitalMS_API.Controllers
                 return NotFound();
             }
 
-            return Ok(_mapper.Map<DoctorDto>(doctorDomainModel));
-        }
+            var doctorDto = _mapper.Map<DoctorDto>(doctorDomainModel);
 
-        [HttpPut]
-        [Route("EditDoctor/{id:int}")]
-        public async Task<IActionResult> Edit([FromRoute] int id, [FromForm] UpdateDoctorRequestDto updateDoctorRequestDto)
-        {
-            var doctorDomainModel = _mapper.Map<Doctor>(updateDoctorRequestDto);
-
-            if (doctorDomainModel == null)
+            if (doctorDomainModel.Reviews != null && doctorDomainModel.Reviews.Any())
             {
-                return NotFound();
-            }
-
-            if (updateDoctorRequestDto.Image != null)
-            {
-                await _unitOfWork.Doctor.ValidateFileEdit(updateDoctorRequestDto);
-
-                var fileExtension = Path.GetExtension(updateDoctorRequestDto.Image.FileName);
-                doctorDomainModel.ImageFileExtension = fileExtension;
-                doctorDomainModel.ImageFileSizeInBytes = updateDoctorRequestDto.Image.Length;
-
-                doctorDomainModel = await _unitOfWork.Doctor.UploadDrImage(doctorDomainModel);
-
-                doctorDomainModel.ImageFilePath = string.Empty;
+                doctorDto.TotalReviewsCount = doctorDomainModel.Reviews.Count;
+                doctorDto.ReviewStarAverage = Math.Round(doctorDomainModel.Reviews.Average(r => r.Stars), 2);
             }
             else
             {
-                doctorDomainModel.ImageFileName = updateDoctorRequestDto.ImageFileName;
+                doctorDto.TotalReviewsCount = 0;
+                doctorDto.ReviewStarAverage = 0;
             }
 
-            var updatedDoctor = await _unitOfWork.Doctor.UpdateAsync(id, doctorDomainModel);
+            return Ok(doctorDto);
+        }
+
+        [HttpPut]
+        [Route("EditDoctor")]
+        public async Task<IActionResult> Edit([FromQuery] int id, [FromBody] UpdateDoctorRequestDto updateDoctorRequestDto)
+        {
+
+            if (updateDoctorRequestDto == null)
+            {
+                return BadRequest();
+            }
+
+            var updatedDoctor = await _unitOfWork.Doctor.UpdateAsync(id, updateDoctorRequestDto);
             if (updatedDoctor == null)
             {
                 return NotFound();
             }
 
-            _mapper.Map<DoctorDto>(doctorDomainModel);
+            _mapper.Map<Doctor>(updatedDoctor);
 
             await _unitOfWork.SaveAsync();
 
@@ -103,8 +99,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpDelete]
-        [Route("DeleteDoctor/{id:int}")]
-        public async Task<IActionResult> Delete([FromRoute] int id)
+        [Route("DeleteDoctor")]
+        public async Task<IActionResult> Delete([FromQuery] int id)
         {
             var doctorDomainModel = await _unitOfWork.Doctor.DeleteDoc(id);
 
@@ -116,6 +112,32 @@ namespace HospitalMS_API.Controllers
             await _unitOfWork.SaveAsync();
 
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("GetTotalDoctors")]
+        public async Task<IActionResult> GetTotalDoctors()
+        {
+            var totalDoctors = await _unitOfWork.Doctor.GetAllAsync() ?? Enumerable.Empty<Doctor>();
+            return Ok(totalDoctors.Count());
+        }
+
+        [HttpGet]
+        [Route("GetTotalAvailableDoctors")]
+        public async Task<IActionResult> GetTotalAvailableDoctors()
+        {
+            var allDoctors = await _unitOfWork.Doctor.GetAllAsync() ?? Enumerable.Empty<Doctor>();
+            var availableDoctors = allDoctors.Where(d => d.isAvailable == true);
+            return Ok(availableDoctors.Count());
+        }
+
+        [HttpGet]
+        [Route("GetTotalUnavailableDoctors")]
+        public async Task<IActionResult> GetTotalUnavailableDoctors()
+        {
+            var allDoctors = await _unitOfWork.Doctor.GetAllAsync() ?? Enumerable.Empty<Doctor>();
+            var unavailableDoctors = allDoctors.Where(d => d.isAvailable == false);
+            return Ok(unavailableDoctors.Count());
         }
     }
 }

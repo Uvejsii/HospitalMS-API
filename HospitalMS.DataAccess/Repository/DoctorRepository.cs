@@ -1,4 +1,6 @@
-﻿using HospitalMS.DataAccess.Data;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
@@ -16,80 +18,49 @@ namespace HospitalMS.DataAccess.Repository
     public class DoctorRepository : Repository<Doctor>, IDoctorRepository
     {
         private ApplicationDbContext _db;
-        private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAmazonS3 _amazonS3;
 
-        public DoctorRepository(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor) : base(db)
+        public DoctorRepository(ApplicationDbContext db, IAmazonS3 amazonS3) : base(db)
         {
             _db = db;
-            _webHostEnvironment = webHostEnvironment;
-            _httpContextAccessor = httpContextAccessor;
+            _amazonS3 = amazonS3;
         }
 
-        public async Task<Doctor?> UpdateAsync(int id, Doctor doctor)
+        public async Task<Doctor?> UpdateAsync(int id, UpdateDoctorRequestDto updateDoctorRequestDto)
         {
             var doctorFromDb = await _db.Doctors.FindAsync(id);
-
             if (doctorFromDb != null)
             {
-                doctorFromDb.FirstName = doctor.FirstName;
-                doctorFromDb.LastName = doctor.LastName;
-                doctorFromDb.YearsOfExperience = doctor.YearsOfExperience;
-                doctorFromDb.DepartamentId = doctor.DepartamentId;
-                doctorFromDb.Email = doctor.Email;
-                doctorFromDb.PhoneNumber = doctor.PhoneNumber;
-                doctorFromDb.ConsultationFee = doctor.ConsultationFee;
-                doctorFromDb.isAvailable = doctor.isAvailable;
-                doctorFromDb.Languages = doctor.Languages;
-                if (doctor.Image != null)
+                doctorFromDb.FirstName = updateDoctorRequestDto.FirstName;
+                doctorFromDb.LastName = updateDoctorRequestDto.LastName;
+                doctorFromDb.YearsOfExperience = updateDoctorRequestDto.YearsOfExperience;
+                doctorFromDb.DepartamentId = updateDoctorRequestDto.DepartamentId;
+                doctorFromDb.PhoneNumber = updateDoctorRequestDto.PhoneNumber;
+                doctorFromDb.ConsultationFee = updateDoctorRequestDto.ConsultationFee;
+                doctorFromDb.isAvailable = updateDoctorRequestDto.isAvailable;
+                doctorFromDb.Languages = updateDoctorRequestDto.Languages;
+
+                if (doctorFromDb.ImageFilePath != null && updateDoctorRequestDto.ImageFilePath != null)
                 {
-                    var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
+                    string bucketName = "hms-main-files";
+                    string region = "us-east-1";
+                    string s3Url = $"https://{bucketName}.s3.{region}.amazonaws.com/{updateDoctorRequestDto.ImageFilePath}";
+                    var uri = new Uri(doctorFromDb.ImageFilePath);
+                    string key = uri.AbsolutePath.TrimStart('/');
 
-                    if (doctorFromDb.ImageFileName != doctor.ImageFileName)
+                    var request = new DeleteObjectRequest
                     {
-                        var existingFilePath = Path.Combine(imagesFolderPath, $"{doctorFromDb.ImageFileName}{doctorFromDb.ImageFileExtension}");
-                        if (File.Exists(existingFilePath))
-                        {
-                            File.Delete(existingFilePath);
-                        }
-                    }
+                        BucketName = bucketName,
+                        Key = key
+                    };
 
-                    doctorFromDb.Image = doctor.Image;
-                    doctorFromDb.ImageFileExtension = doctor.ImageFileExtension;
-                    doctorFromDb.ImageFileSizeInBytes = doctor.ImageFileSizeInBytes;
-                    doctorFromDb.ImageFileName = doctor.ImageFileName;
+                    await _amazonS3.DeleteObjectAsync(request);
 
-                    var newFilePath = Path.Combine(imagesFolderPath, $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
-                    using var stream = new FileStream(newFilePath, FileMode.Create);
-                    await doctor.Image.CopyToAsync(stream);
-
-                    var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctor.ImageFileExtension}";
-                    doctorFromDb.ImageFilePath = urlFilePath;
+                    doctorFromDb.ImageFilePath = s3Url;
                 }
-
-                if (doctorFromDb.ImageFileName != doctor.ImageFileName)
-                {
-                    var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
-
-                    var existingFileName = Path.GetFileName(new Uri(doctorFromDb.ImageFilePath).AbsolutePath);
-                    var existingFilePath = Path.Combine(imagesFolderPath, existingFileName);
-                    var newFileName = $"{doctor.ImageFileName}{doctorFromDb.ImageFileExtension}";
-                    var newFilePath = Path.Combine(imagesFolderPath, newFileName);
-
-                    if (File.Exists(existingFilePath) && existingFilePath != newFilePath)
-                    {
-                        File.Move(existingFilePath, newFilePath);
-                    }
-
-                    doctorFromDb.ImageFileName = doctor.ImageFileName;
-                    var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctorFromDb.ImageFileExtension}";
-                    doctorFromDb.ImageFilePath = urlFilePath;
-                }
-
-                return doctorFromDb;
             }
 
-            return null;
+            return doctorFromDb;
         }
 
         public async Task<bool> DeleteDoc(int? id)
@@ -98,114 +69,35 @@ namespace HospitalMS.DataAccess.Repository
 
             if (doctorFromDb != null)
             {
-                var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
-                var filePath = Path.Combine(imagesFolderPath, $"{doctorFromDb.ImageFileName}{doctorFromDb.ImageFileExtension}");
-                
-                if (File.Exists(filePath))
+                if (!string.IsNullOrEmpty(doctorFromDb.ApplicationUserId))
                 {
-                    File.Delete(filePath);
-                }
+                    var appUser = await _db.ApplicationUsers.FindAsync(doctorFromDb.ApplicationUserId);
+                    if (appUser != null)
+                    {
+                        _db.ApplicationUsers.Remove(appUser);
+                        _db.Doctors.Remove(doctorFromDb);
 
-                _db.Doctors.Remove(doctorFromDb);
+                        if (!string.IsNullOrEmpty(doctorFromDb.ImageFilePath))
+                        {
+                            string bucketName = "hms-main-files";
+                            var uri = new Uri(doctorFromDb.ImageFilePath);
+                            string key = uri.AbsolutePath.TrimStart('/');
+
+                            var request = new DeleteObjectRequest
+                            {
+                                BucketName = bucketName,
+                                Key = key
+                            };
+
+                            await _amazonS3.DeleteObjectAsync(request);
+                        }
+                    }
+                }
 
                 return true;
             }
 
             return false;
-        }
-
-        public async Task<Doctor?> UploadDrImage(Doctor doctor)
-        {
-            var imagesFolderPath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images");
-
-            if (!string.IsNullOrEmpty(doctor.ImageFilePath))
-            {
-                var existingFileName = Path.GetFileName(new Uri(doctor.ImageFilePath).AbsolutePath);
-                var existingFilePath = Path.Combine(imagesFolderPath, existingFileName);
-                var newFileName = $"{doctor.ImageFileName}{doctor.ImageFileExtension}";
-                var newFilePath = Path.Combine(imagesFolderPath, newFileName);
-
-                try
-                {
-                    if (doctor.Image == null)
-                    {
-                        if (!string.IsNullOrEmpty(doctor.ImageFileName) && doctor.ImageFileName != existingFileName)
-                        {
-                            if (File.Exists(existingFilePath) && existingFilePath != newFilePath)
-                            {
-                                File.Move(existingFilePath, newFilePath);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (File.Exists(existingFilePath))
-                        {
-                            File.Delete(existingFilePath);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new IOException("Error handling the existing image file.", ex);
-                }
-            }
-
-            if (doctor.Image != null)
-            {
-                var newLocalFilePath = Path.Combine(imagesFolderPath, $"{doctor.ImageFileName}{doctor.ImageFileExtension}");
-
-                if (File.Exists(newLocalFilePath))
-                {
-                    File.Delete(newLocalFilePath);
-                }
-
-                using var stream = new FileStream(newLocalFilePath, FileMode.Create);
-                await doctor.Image.CopyToAsync(stream);
-            }
-
-            var urlFilePath = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}{_httpContextAccessor.HttpContext.Request.PathBase}/Images/{doctor.ImageFileName}{doctor.ImageFileExtension}";
-            doctor.ImageFilePath = urlFilePath;
-
-            Console.WriteLine($"Updated ImageFilePath: {doctor.ImageFilePath}");
-            return doctor;
-        }
-
-
-        public async Task<bool> ValidateFileUpload(RegisterDoctorFullRequestDto registerDoctorFullRequestDto)
-        {
-            var allowedExtensions = new string[] { ".jpg", ".jpeg", ".png" };
-
-            if (!allowedExtensions.Contains(Path.GetExtension(registerDoctorFullRequestDto.Image.FileName)))
-            {
-                return await Task.FromResult(false);
-            }
-
-            if (registerDoctorFullRequestDto.Image.Length > 10485760)
-            {
-                return await Task.FromResult(false);
-
-            }
-
-            return await Task.FromResult(true);
-        }
-
-        public async Task<bool> ValidateFileEdit(UpdateDoctorRequestDto updateDoctorRequestDto)
-        {
-            var allowedExtensions = new string[] { ".jpg", ".jpeg", ".png" };
-
-            if (!allowedExtensions.Contains(Path.GetExtension(updateDoctorRequestDto.Image.FileName)))
-            {
-                return await Task.FromResult(false);
-            }
-
-            if (updateDoctorRequestDto.Image.Length > 10485760)
-            {
-                return await Task.FromResult(false);
-
-            }
-
-            return await Task.FromResult(true);
         }
     }
 }

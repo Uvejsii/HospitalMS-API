@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using Amazon.S3;
+using AutoMapper;
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
@@ -19,12 +20,31 @@ namespace HospitalMS_API.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IAmazonS3 _s3Client;
 
-        public AuthController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub> hubContext)
+        public AuthController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub> hubContext, IAmazonS3 s3Client)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _hubContext = hubContext;
+            _s3Client = s3Client;
+        }
+
+        [HttpGet]
+        [Route("GetAllS3Buckets")]
+        public async Task<IActionResult> GetAllS3Buckets()
+        {
+            try
+            {
+                var data = await _s3Client.ListBucketsAsync();
+                var buckets = data.Buckets.Select(b => { return b.BucketName; });
+
+                return Ok(buckets);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving S3 buckets: {ex.Message}");
+            }
         }
 
         [HttpPost]
@@ -65,7 +85,7 @@ namespace HospitalMS_API.Controllers
 
         [HttpPost]
         [Route("RegisterDrFull")]
-        public async Task<IActionResult> RegisterDrFull([FromForm] RegisterDoctorFullRequestDto registerDoctorFullRequestDto)
+        public async Task<IActionResult> RegisterDrFull([FromBody] RegisterDoctorFullRequestDto registerDoctorFullRequestDto)
         {
             var (success, appUserId) = await _unitOfWork.Auth.RegisterDoctor(registerDoctorFullRequestDto);
             if (success == false || string.IsNullOrEmpty(appUserId))
@@ -73,28 +93,16 @@ namespace HospitalMS_API.Controllers
                 return BadRequest("Error Registering Doctor");
             }
 
-            if (registerDoctorFullRequestDto.Image == null)
-            {
-                return BadRequest(new { message = "Image file is required." });
-            }
-
             var doctorDomainModel = _mapper.Map<Doctor>(registerDoctorFullRequestDto);
-            var fileExtension = Path.GetExtension(registerDoctorFullRequestDto.Image.FileName);
-            if (string.IsNullOrEmpty(fileExtension))
-            {
-                return BadRequest(new { message = "File extension is missing or invalid." });
-            }
 
-            await _unitOfWork.Doctor.ValidateFileUpload(registerDoctorFullRequestDto);
+            string bucketName = "hms-main-files";
+            string region = "us-east-1";
+            string s3Url = $"https://{bucketName}.s3.{region}.amazonaws.com/{registerDoctorFullRequestDto.ImageFileUrl}";
 
-            doctorDomainModel.Image = registerDoctorFullRequestDto.Image;
-            doctorDomainModel.ImageFileExtension = fileExtension;
-            doctorDomainModel.ImageFileSizeInBytes = registerDoctorFullRequestDto.Image.Length;
-            doctorDomainModel.ImageFileName = registerDoctorFullRequestDto.ImageFileName;
             doctorDomainModel.ApplicationUserId = appUserId;
+            doctorDomainModel.ImageFilePath = s3Url;
 
             await _unitOfWork.Doctor.CreateAsync(doctorDomainModel);
-            await _unitOfWork.Doctor.UploadDrImage(doctorDomainModel);
             await _unitOfWork.SaveAsync();
 
             return Ok();
@@ -276,6 +284,19 @@ namespace HospitalMS_API.Controllers
             }
 
             return Ok(_mapper.Map<List<AllUsersDto>>(users));
+        }
+
+        [HttpGet]
+        [Route("GetTotalPatients")]
+        public async Task<IActionResult> GetTotalPatients()
+        {
+            var totalPatients = await _unitOfWork.Auth.GetTotalPatients();
+            if (totalPatients == 0)
+            {
+                return Ok(0);
+            }
+
+            return Ok(totalPatients);
         }
     }
 }

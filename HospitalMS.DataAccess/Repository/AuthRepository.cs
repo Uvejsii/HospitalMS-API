@@ -110,10 +110,11 @@ namespace HospitalMS.DataAccess.Repository
 
         public async Task<(bool Success, string AppUserId)> RegisterDoctor(RegisterDoctorFullRequestDto registerDoctorFullRequestDto)
         {
-            if (registerDoctorFullRequestDto.Password != registerDoctorFullRequestDto.ConfirmPassword)
-            {
-                return (false, null);
-            }
+
+            var firstName = registerDoctorFullRequestDto.FirstName;
+            var lastName = registerDoctorFullRequestDto.LastName;
+
+            var generatedPassword = $"{firstName}{lastName}123!";
 
             var user = new ApplicationUser
             {
@@ -123,15 +124,16 @@ namespace HospitalMS.DataAccess.Repository
                 LastName = registerDoctorFullRequestDto.LastName,
             };
 
-            var result = await _userManager.CreateAsync(user, registerDoctorFullRequestDto.Password);
+            var result = await _userManager.CreateAsync(user, generatedPassword);
             if (!result.Succeeded)
             {
                 return (false, null);
             }
 
-            if (!string.IsNullOrEmpty(registerDoctorFullRequestDto.Role) && await _roleManager.RoleExistsAsync(registerDoctorFullRequestDto.Role))
+            var role = !string.IsNullOrEmpty(registerDoctorFullRequestDto.Role) ? registerDoctorFullRequestDto.Role : "Doctor";
+            if (!string.IsNullOrEmpty(role) && await _roleManager.RoleExistsAsync(role))
             {
-                await _userManager.AddToRoleAsync(user, registerDoctorFullRequestDto.Role);
+                await _userManager.AddToRoleAsync(user, role);
                 return (true, user.Id);
             }
 
@@ -258,6 +260,22 @@ namespace HospitalMS.DataAccess.Repository
             var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
 
             return Task.FromResult(userIdClaim?.Value);
+        }
+
+        public async Task<int> GetTotalPatients()
+        {
+            var users = await _db.ApplicationUsers.ToListAsync();
+            var patientCount = 0;
+
+            foreach (var user in users)
+            {
+                if (await _userManager.IsInRoleAsync(user, "Patient"))
+                {
+                    patientCount++;
+                }
+            }
+
+            return patientCount;
         }
     }
 }

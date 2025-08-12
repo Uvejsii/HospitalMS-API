@@ -18,12 +18,7 @@ namespace HospitalMS.Models.Domain
         public string? ApplicationUserId { get; set; }
         [ForeignKey("ApplicationUserId")]
         public ApplicationUser? ApplicationUser { get; set; }
-        [NotMapped]
-        public IFormFile Image { get; set; }
-        public string ImageFileName { get; set; }
-        public string ImageFileExtension { get; set; }
-        public long ImageFileSizeInBytes { get; set; }
-        public string ImageFilePath { get; set; }
+        public string? ImageFilePath { get; set; }
         public int YearsOfExperience { get; set; }
         public int DepartamentId { get; set; }
         [ForeignKey("DepartamentId")]

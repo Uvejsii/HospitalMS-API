@@ -10,10 +10,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
 {
     public interface IDoctorRepository : IRepository<Doctor>
     {
-        Task<Doctor?> UpdateAsync(int id, Doctor doctor);
+        Task<Doctor?> UpdateAsync(int id, UpdateDoctorRequestDto updateDoctorRequestDto);
         Task<bool> DeleteDoc(int? id);
-        Task<Doctor?> UploadDrImage(Doctor doctor);
-        Task<bool> ValidateFileUpload(RegisterDoctorFullRequestDto registerDoctorFullRequestDto);
-        Task<bool> ValidateFileEdit(UpdateDoctorRequestDto updateDoctorRequestDto);
     }
 }

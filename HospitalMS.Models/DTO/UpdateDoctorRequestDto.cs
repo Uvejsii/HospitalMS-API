@@ -18,8 +18,7 @@ namespace HospitalMS.Models.DTO
         public decimal ConsultationFee { get; set; }
         public bool isAvailable { get; set; }
         public int DepartamentId { get; set; }
-        public IFormFile? Image { get; set; }
-        public string ImageFileName { get; set; }
+        public string? ImageFilePath { get; set; }
         public string Languages { get; set; }
     }
 }

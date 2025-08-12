@@ -39,7 +39,8 @@ namespace HospitalMS.DataAccess.Repository
             return false;
         }
 
-        public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
+        public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null,
+            int pageNumber = 0, int pageSize = 0)
         {
             IQueryable<T> query = dbSet;
 
@@ -54,6 +55,11 @@ namespace HospitalMS.DataAccess.Repository
                 {
                     query = query.Include(includeProp);
                 }
+            }
+
+            if (pageNumber > 0 && pageSize > 0)
+            {
+                query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
             }
 
             return await query.AsNoTracking().OrderDescending().ToListAsync();

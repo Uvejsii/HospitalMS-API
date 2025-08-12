@@ -22,5 +22,16 @@ namespace HospitalMS.DataAccess.Data
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<DoctorReview> DoctorReviews { get; set; }
         public DbSet<Booking> Bookings { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(cm => cm.Sender)
+                .WithMany()
+                .HasForeignKey(cm => cm.SenderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }

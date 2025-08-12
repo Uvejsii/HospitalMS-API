@@ -13,7 +13,6 @@ namespace HospitalMS.Models.DTO
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string ImageFileName { get; set; }
         public string ImageFilePath { get; set; }
         public int YearsOfExperience { get; set; }
         public string Email { get; set; }

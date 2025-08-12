@@ -90,5 +90,30 @@ namespace HospitalMS_API.Controllers
 
             return Ok();
         }
+
+        [HttpGet]
+        [Route("GetTotalDepartments")]
+        public async Task<IActionResult> GetTotalDepartments()
+        {
+            var totalDepartments = await _unitOfWork.Departament.GetAllAsync() ?? Enumerable.Empty<Departament>();
+            return Ok(totalDepartments.Count());
+        }
+
+        [HttpGet]
+        [Route("GetDoctorCountPerDepartment")]
+        public async Task<IActionResult> GetCountPerDepartment()
+        {
+            var departments = await _unitOfWork.Departament.GetAllAsync(includeProperties: "Doctors");
+            if (departments == null || !departments.Any())
+            {
+                return Ok(new List<Departament>());
+            }
+            var departmentCounts = departments.Select(d => new
+            {
+                DepartmentName = d.Name,
+                DoctorCount = d.Doctors?.Count ?? 0
+            });
+            return Ok(departmentCounts);
+        }
     }
 }

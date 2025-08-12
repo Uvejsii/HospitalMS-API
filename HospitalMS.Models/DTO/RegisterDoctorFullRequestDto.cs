@@ -16,9 +16,9 @@ namespace HospitalMS.Models.DTO
         [Required]
         public string LastName { get; set; }
         [Required]
-        public int YearsOfExperience { get; set; }
-        [Required]
         public string Email { get; set; }
+        [Required]
+        public int YearsOfExperience { get; set; }
         [Required]
         public string PhoneNumber { get; set; }
         [Required]
@@ -28,12 +28,7 @@ namespace HospitalMS.Models.DTO
         [Required]
         public int DepartamentId { get; set; }
         [Required]
-        public IFormFile Image { get; set; }
-        [Required]
-        public string ImageFileName { get; set; }
-        public string Password { get; set; }
-        [Required]
-        public string ConfirmPassword { get; set; }
+        public string ImageFileUrl { get; set; }
         public string Languages { get; set; }
         [JsonIgnore]
         public string Role { get; set; } = "Doctor";

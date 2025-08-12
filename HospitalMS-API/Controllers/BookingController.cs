@@ -111,8 +111,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpGet]
-        [Route("GetBookingsByDoctorId/{doctorId:int}")]
-        public async Task<IActionResult> GetBookingByDoctorId([FromRoute] int doctorId)
+        [Route("GetBookingsByDoctorId")]
+        public async Task<IActionResult> GetBookingByDoctorId([FromQuery] int doctorId)
         {
             var bookingsModel = await _unitOfWork.Booking.GetAllAsync(b => b.DoctorId == doctorId, includeProperties: "User,Doctor.Reviews");
             List<BookingDto> bookings = _mapper.Map<List<BookingDto>>(bookingsModel);
@@ -124,10 +124,10 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpGet]
-        [Route("GetBookingsByUserId/{userId}")]
-        public async Task<IActionResult> GetBookingByUserId([FromRoute] string userId)
+        [Route("GetBookingsByUserId")]
+        public async Task<IActionResult> GetBookingByUserId([FromQuery] string userId)
         {
-            var bookingsModel = await _unitOfWork.Booking.GetAllAsync(b => b.UserId == userId, includeProperties: "User,Doctor.Reviews");
+            var bookingsModel = await _unitOfWork.Booking.GetAllAsync(b => b.UserId == userId, includeProperties: "User,Doctor");
             List<BookingDto> bookings = _mapper.Map<List<BookingDto>>(bookingsModel);
             if (bookings == null || !bookings.Any())
             {
@@ -179,6 +179,66 @@ namespace HospitalMS_API.Controllers
             .ToList();
 
             return Ok(freeSlots);
+        }
+
+        [HttpGet]
+        [Route("GetTotalBookings")]
+        public async Task<IActionResult> GetTotalBookings()
+        {
+            var bookingModel = await _unitOfWork.Booking.GetAllAsync();
+
+            if (bookingModel == null || !bookingModel.Any())
+            {
+                return Ok(new
+                {
+                    overallTotal = 0,
+                    pendingTotal = 0,
+                    confirmedTotal = 0,
+                    ongoingTotal = 0,
+                    finishedTotal = 0,
+                    cancelledTotal = 0
+                });
+            }
+
+            var bookingCounts = bookingModel.GroupBy(b => b.Status)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var response = new
+            {
+                overallTotal = bookingModel.Count,
+                pendingTotal = bookingCounts.ContainsKey(BookingStatus.Pending) ? bookingCounts[BookingStatus.Pending] : 0,
+                confirmedTotal = bookingCounts.ContainsKey(BookingStatus.Confirmed) ? bookingCounts[BookingStatus.Confirmed] : 0,
+                ongoingTotal = bookingCounts.ContainsKey(BookingStatus.Ongoing) ? bookingCounts[BookingStatus.Ongoing] : 0,
+                finishedTotal = bookingCounts.ContainsKey(BookingStatus.Finished) ? bookingCounts[BookingStatus.Finished] : 0,
+                cancelledTotal = bookingCounts.ContainsKey(BookingStatus.Cancelled) ? bookingCounts[BookingStatus.Cancelled] : 0
+            };
+
+            return Ok(response);
+        }
+
+        [HttpGet]
+        [Route("GetMonthlyBookingTotals")]
+        public async Task<IActionResult> GetMonthlyBookingTotals()
+        {
+            var bookings = await _unitOfWork.Booking.GetAllAsync();
+
+            if (bookings == null || !bookings.Any())
+            {
+                return Ok(new List<object>());
+            }
+
+            var monthlyTotals = bookings
+                .GroupBy(b => new { b.StartTime.Year, b.StartTime.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    TotalPrice = g.Sum(b => b.Price)
+                })
+                .ToList();
+
+            return Ok(monthlyTotals);
         }
     }
 }

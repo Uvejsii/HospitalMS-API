@@ -1,3 +1,4 @@
+using Amazon.S3;
 using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository;
 using HospitalMS.DataAccess.Repository.IRepository;
@@ -93,6 +94,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
+
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonS3>();
 
 builder.Services.AddCors(options =>
 {

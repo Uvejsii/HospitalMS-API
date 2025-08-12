@@ -1,4 +1,6 @@
-﻿using HospitalMS.DataAccess.Data;
+﻿using Amazon.S3;
+using Amazon.S3.Util;
+using HospitalMS.DataAccess.Data;
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using Microsoft.AspNetCore.Hosting;
@@ -24,12 +26,12 @@ namespace HospitalMS.DataAccess.Repository
         public IChatRepository Chat { get; private set; }
         public IDoctorReviewRepository DoctorReview { get; private set; }
         public IBookingRepository Booking { get; private set; }
-        public UnitOfWork(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment, IHttpContextAccessor httpContextAccessor, 
-            UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager,
+        public UnitOfWork(ApplicationDbContext db, IAmazonS3 amazonS3, UserManager<ApplicationUser> userManager, 
+            RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager,
             ClaimsPrincipal claimsPrincipal, IConfiguration configuration)
         {
             _db = db;
-            Doctor = new DoctorRepository(_db, webHostEnvironment, httpContextAccessor);
+            Doctor = new DoctorRepository(_db, amazonS3);
             Departament = new DepartamentRepository(_db);
             Auth = new AuthRepository(_db, userManager, roleManager, signInManager, claimsPrincipal, configuration);
             Chat = new ChatRepository(_db);
