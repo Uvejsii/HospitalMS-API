@@ -20,31 +20,12 @@ namespace HospitalMS_API.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IHubContext<NotificationHub> _hubContext;
-        private readonly IAmazonS3 _s3Client;
 
-        public AuthController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub> hubContext, IAmazonS3 s3Client)
+        public AuthController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub> hubContext)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _hubContext = hubContext;
-            _s3Client = s3Client;
-        }
-
-        [HttpGet]
-        [Route("GetAllS3Buckets")]
-        public async Task<IActionResult> GetAllS3Buckets()
-        {
-            try
-            {
-                var data = await _s3Client.ListBucketsAsync();
-                var buckets = data.Buckets.Select(b => { return b.BucketName; });
-
-                return Ok(buckets);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error retrieving S3 buckets: {ex.Message}");
-            }
         }
 
         [HttpPost]

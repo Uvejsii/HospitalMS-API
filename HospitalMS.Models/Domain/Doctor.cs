@@ -29,6 +29,7 @@ namespace HospitalMS.Models.Domain
         public DateTime JoinedDate { get; set; } = DateTime.Now;
         public string? Languages { get; set; }
         public bool isAvailable { get; set; }
+        public bool isActive { get; set; }
         public ICollection<DoctorReview> Reviews { get; set; } = new List<DoctorReview>();
     }
 }

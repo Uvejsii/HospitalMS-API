@@ -11,5 +11,6 @@ namespace HospitalMS.DataAccess.Repository.IRepository
     {
         Task<Departament?> UpdateAsync(int id, Departament departament);
         Task<bool> DeleteDepartment(int id);
+        Task<bool> UpdateDepartmentStatus(int id, bool status);
     }
 }

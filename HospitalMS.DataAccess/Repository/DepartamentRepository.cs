@@ -45,5 +45,16 @@ namespace HospitalMS.DataAccess.Repository
 
             return false;
         }
+
+        public async Task<bool> UpdateDepartmentStatus(int id, bool status)
+        {
+            var departmentFromDb = await _db.Departaments.FindAsync(id);
+            if (departmentFromDb != null)
+            {
+                departmentFromDb.IsActive = status;
+                return true;
+            }
+            return false;
+        }
     }
 }

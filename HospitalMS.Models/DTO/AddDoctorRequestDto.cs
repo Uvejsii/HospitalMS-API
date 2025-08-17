@@ -25,6 +25,8 @@ namespace HospitalMS.Models.DTO
         [Required]
         public bool isAvailable { get; set; }
         [Required]
+        public bool isActive { get; set; }
+        [Required]
         public int DepartamentId { get; set; }
         [Required]
         public IFormFile Image { get; set; }

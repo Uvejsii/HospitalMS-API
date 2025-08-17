@@ -11,6 +11,7 @@ namespace HospitalMS.Models.DTO
         public int Id { get; set; }
         public string Name { get; set; }
         public string Location { get; set; }
+        public bool IsActive { get; set; }
         //public ICollection<DoctorDto> Doctors { get; set; }
     }
 }

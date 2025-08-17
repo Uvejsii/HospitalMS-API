@@ -63,6 +63,7 @@ namespace HospitalMS.DataAccess.Repository
             return doctorFromDb;
         }
 
+        //We dont need this aymore
         public async Task<bool> DeleteDoc(int? id)
         {
             var doctorFromDb = await _db.Doctors.FindAsync(id);
@@ -98,6 +99,21 @@ namespace HospitalMS.DataAccess.Repository
             }
 
             return false;
+        }
+
+        public async Task<bool> UpdateDocStatus(int? id, bool status)
+        {
+            var doctorFromDb = await _db.Doctors.FindAsync(id);
+            if (doctorFromDb != null)
+            {
+                doctorFromDb.isActive = status;
+                _db.Doctors.Update(doctorFromDb);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

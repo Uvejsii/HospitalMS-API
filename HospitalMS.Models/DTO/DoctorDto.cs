@@ -19,6 +19,7 @@ namespace HospitalMS.Models.DTO
         public string PhoneNumber { get; set; }
         public decimal ConsultationFee { get; set; }
         public bool isAvailable { get; set; }
+        public bool isActive { get; set; }
         public string Languages { get; set; }
         public DepartamentDto Departament { get; set; }
         public int TotalReviewsCount { get; set; }

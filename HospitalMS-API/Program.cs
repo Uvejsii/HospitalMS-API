@@ -138,12 +138,6 @@ using (var scope = app.Services.CreateScope())
     await SeedData.Initialize(services, userManager, roleManager);
 }
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images")),
-    RequestPath = "/Images"
-});
-
 app.MapControllers();
 
 app.Run();

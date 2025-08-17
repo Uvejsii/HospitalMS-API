@@ -24,9 +24,9 @@ namespace HospitalMS_API.Controllers
 
         [HttpGet]
         [Route("GetAllDoctors")]
-        public async Task<IActionResult> GetAll([FromQuery]int pageNumber, int pageSize)
+        public async Task<IActionResult> GetAll([FromQuery]int pageNumber, int pageSize, bool status)
         {
-            var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(null,
+            var doctorsDomainModel = await _unitOfWork.Doctor.GetAllAsync(d => d.isActive == status,
                 includeProperties: "Departament,Reviews.Reviewer", pageNumber, pageSize);
             var doctorDtos = _mapper.Map<List<DoctorDto>>(doctorsDomainModel);
 
@@ -98,11 +98,11 @@ namespace HospitalMS_API.Controllers
             return Ok();
         }
 
-        [HttpDelete]
-        [Route("DeleteDoctor")]
-        public async Task<IActionResult> Delete([FromQuery] int id)
+        [HttpPut]
+        [Route("UpdateDoctorStatus")]
+        public async Task<IActionResult> UpdateDoctorStatus([FromQuery] int id, bool status)
         {
-            var doctorDomainModel = await _unitOfWork.Doctor.DeleteDoc(id);
+            var doctorDomainModel = await _unitOfWork.Doctor.UpdateDocStatus(id, status);
 
             if (doctorDomainModel == false)
             {

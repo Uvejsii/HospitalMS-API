@@ -34,9 +34,9 @@ namespace HospitalMS_API.Controllers
 
         [HttpGet]
         [Route("GetAllDepartments")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] bool status)
         {
-            var departmentsDomainModel = await _unitOfWork.Departament.GetAllAsync(); // removed: includeProp
+            var departmentsDomainModel = await _unitOfWork.Departament.GetAllAsync(d => d.IsActive == status); // removed: includeProp
 
             return Ok(_mapper.Map<List<DepartamentDto>>(departmentsDomainModel));
         }
@@ -56,8 +56,8 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpPut]
-        [Route("EditDepartment/{id:int}")]
-        public async Task<IActionResult> Edit([FromRoute] int id, [FromBody] UpdateDepartamentRequestDto updateDepartamentRequestDto)
+        [Route("EditDepartment")]
+        public async Task<IActionResult> Edit([FromQuery] int id, [FromBody] UpdateDepartamentRequestDto updateDepartamentRequestDto)
         {
             var departmentDomainModel = _mapper.Map<Departament>(updateDepartamentRequestDto);
 
@@ -75,11 +75,11 @@ namespace HospitalMS_API.Controllers
             return Ok();
         }
 
-        [HttpDelete]
-        [Route("DeleteDepartment/{id:int}")]
-        public async Task<IActionResult> Delete([FromRoute] int id)
+        [HttpPut]
+        [Route("UpdateDepartmentStatus")]
+        public async Task<IActionResult> UpdateDepartmentStatus([FromQuery] int id, bool status)
         {
-            var departmentDomainModel = await _unitOfWork.Departament.DeleteDepartment(id);
+            var departmentDomainModel = await _unitOfWork.Departament.UpdateDepartmentStatus(id, status);
 
             if (departmentDomainModel == false)
             {
