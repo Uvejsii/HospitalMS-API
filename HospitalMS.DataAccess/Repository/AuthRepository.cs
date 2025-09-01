@@ -264,18 +264,59 @@ namespace HospitalMS.DataAccess.Repository
 
         public async Task<int> GetTotalPatients()
         {
+            var patientRole = await _roleManager.FindByNameAsync("Patient");
+            if (patientRole == null)
+            {
+                return 0;
+            }
+
+            var userRoleIds = await _db.UserRoles
+                .Where(ur => ur.RoleId == patientRole.Id)
+                .Select(ur => ur.UserId)
+                .ToListAsync();
+
+            var patientCount = await _db.ApplicationUsers
+                .CountAsync(u => userRoleIds.Contains(u.Id));
+
+            return patientCount;
+        }
+
+        public async Task<List<AllUsersDto>> GetAllPatietns()
+        {
             var users = await _db.ApplicationUsers.ToListAsync();
-            var patientCount = 0;
+            var patientUsers = new List<AllUsersDto>();
 
             foreach (var user in users)
             {
                 if (await _userManager.IsInRoleAsync(user, "Patient"))
                 {
-                    patientCount++;
+                    patientUsers.Add(new AllUsersDto
+                    {
+                        Id = user.Id,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Email = user.Email
+                    });
                 }
             }
 
-            return patientCount;
+            return patientUsers;
+        }
+
+        public Task<bool> ChangePassword(ChangePasswordRequestDto changePasswordRequestDto)
+        {
+            var user = _userManager.FindByEmailAsync(changePasswordRequestDto.Email).Result;
+            if (user == null)
+            {
+                return Task.FromResult(false);
+            }
+            var checkPasswordResult = _userManager.CheckPasswordAsync(user, changePasswordRequestDto.OldPassword).Result;
+            if (!checkPasswordResult)
+            {
+                return Task.FromResult(false);
+            }
+            var result = _userManager.ChangePasswordAsync(user, changePasswordRequestDto.OldPassword, changePasswordRequestDto.NewPassword).Result;
+            return Task.FromResult(result.Succeeded);
         }
     }
 }

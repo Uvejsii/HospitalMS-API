@@ -40,6 +40,9 @@ namespace HospitalMS_API.Mappings
             // Bookings Mappings
             CreateMap<Booking, AddBookingRequestDto>().ReverseMap();
             CreateMap<BookingDto, Booking>().ReverseMap();
+
+            // Doctor Vacation Mappings
+            CreateMap<DoctorVacation, AddDoctorVacationRequestDto>().ReverseMap();
         }
     }
 }

@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HospitalMS.Models.Domain
+{
+    public enum DoctorVacationType
+    {
+        AnnualLeave,   // Vacation
+        SickLeave,
+        UnpaidLeave
+    }
+}

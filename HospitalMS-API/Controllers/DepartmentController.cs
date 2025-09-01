@@ -95,7 +95,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetTotalDepartments")]
         public async Task<IActionResult> GetTotalDepartments()
         {
-            var totalDepartments = await _unitOfWork.Departament.GetAllAsync() ?? Enumerable.Empty<Departament>();
+            var totalDepartments = await _unitOfWork.Departament.GetAllAsync(d => d.IsActive) ?? Enumerable.Empty<Departament>();
             return Ok(totalDepartments.Count());
         }
 
@@ -103,7 +103,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetDoctorCountPerDepartment")]
         public async Task<IActionResult> GetCountPerDepartment()
         {
-            var departments = await _unitOfWork.Departament.GetAllAsync(includeProperties: "Doctors");
+            var departments = await _unitOfWork.Departament.GetAllAsync(d => d.IsActive, includeProperties: "Doctors");
             if (departments == null || !departments.Any())
             {
                 return Ok(new List<Departament>());
@@ -111,7 +111,7 @@ namespace HospitalMS_API.Controllers
             var departmentCounts = departments.Select(d => new
             {
                 DepartmentName = d.Name,
-                DoctorCount = d.Doctors?.Count ?? 0
+                DoctorCount = d.Doctors?.Count(doc => doc.isActive) ?? 0
             });
             return Ok(departmentCounts);
         }

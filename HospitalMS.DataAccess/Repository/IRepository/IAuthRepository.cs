@@ -19,6 +19,8 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         Task<bool> ResetPasswordCustom(AuthRequestDto resetPasswordRequestDto);
         Task<string> GetUserIdFromToken(string token);
         Task<Int32> GetTotalPatients();
+        Task<List<AllUsersDto>> GetAllPatietns();
+        Task<bool> ChangePassword(ChangePasswordRequestDto changePasswordRequestDto);
         Task<bool> Logout();
     }
 }

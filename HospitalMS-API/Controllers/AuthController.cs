@@ -202,7 +202,7 @@ namespace HospitalMS_API.Controllers
 
             return Ok(new { message = "Notification sent successfully to doctors." });
         }
-        
+
         [HttpPost]
         [Route("SendNotificationToAllAdmins")]
         public async Task<IActionResult> SendNotificationToAllAdmins([FromBody] NotificationRequestDto notificationRequestDto)
@@ -278,6 +278,34 @@ namespace HospitalMS_API.Controllers
             }
 
             return Ok(totalPatients);
+        }
+
+        [HttpGet]
+        [Route("GetAllPatients")]
+        public async Task<IActionResult> GetAllPatients()
+        {
+            var patients = await _unitOfWork.Auth.GetAllPatietns();
+            if (patients == null || !patients.Any())
+            {
+                return Ok(new List<AllUsersDto>());
+            }
+            return Ok(patients);
+        }
+
+        [HttpPut]
+        [Route("ChangePasswordCustom")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto changePasswordRequestDto)
+        {
+            if (changePasswordRequestDto == null)
+            {
+                return BadRequest("Invalid request data.");
+            }
+            var result = await _unitOfWork.Auth.ChangePassword(changePasswordRequestDto);
+            if (!result)
+            {
+                return BadRequest("Error changing password.");
+            }
+            return Ok();
         }
     }
 }

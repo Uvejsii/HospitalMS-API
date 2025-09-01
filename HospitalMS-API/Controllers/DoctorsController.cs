@@ -118,7 +118,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetTotalDoctors")]
         public async Task<IActionResult> GetTotalDoctors()
         {
-            var totalDoctors = await _unitOfWork.Doctor.GetAllAsync() ?? Enumerable.Empty<Doctor>();
+            var totalDoctors = await _unitOfWork.Doctor.GetAllAsync(d => d.isActive) ?? Enumerable.Empty<Doctor>();
             return Ok(totalDoctors.Count());
         }
 
@@ -127,7 +127,7 @@ namespace HospitalMS_API.Controllers
         public async Task<IActionResult> GetTotalAvailableDoctors()
         {
             var allDoctors = await _unitOfWork.Doctor.GetAllAsync() ?? Enumerable.Empty<Doctor>();
-            var availableDoctors = allDoctors.Where(d => d.isAvailable == true);
+            var availableDoctors = allDoctors.Where(d => d.isAvailable == true && d.isActive);
             return Ok(availableDoctors.Count());
         }
 
@@ -136,7 +136,7 @@ namespace HospitalMS_API.Controllers
         public async Task<IActionResult> GetTotalUnavailableDoctors()
         {
             var allDoctors = await _unitOfWork.Doctor.GetAllAsync() ?? Enumerable.Empty<Doctor>();
-            var unavailableDoctors = allDoctors.Where(d => d.isAvailable == false);
+            var unavailableDoctors = allDoctors.Where(d => d.isAvailable == false && d.isActive);
             return Ok(unavailableDoctors.Count());
         }
     }

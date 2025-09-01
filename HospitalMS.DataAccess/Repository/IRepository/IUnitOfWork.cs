@@ -14,6 +14,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         IChatRepository Chat { get; }
         IDoctorReviewRepository DoctorReview { get; }
         IBookingRepository Booking { get; }
+        IDoctorVacationRepository DoctorVacation { get; }
 
         Task SaveAsync();
     }
