@@ -16,5 +16,8 @@ namespace HospitalMS.Models.DTO
         public string Token { get; set; }
         public bool Success { get; set; }
         public string ErrorMessage { get; set; }
+        public string? DoctorId { get; set; }
+        public string? Department { get; set; }
+        public string? ProfileImage { get; set; }
     }
 }

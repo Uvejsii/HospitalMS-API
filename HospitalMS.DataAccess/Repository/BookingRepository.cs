@@ -18,18 +18,13 @@ namespace HospitalMS.DataAccess.Repository
             _db = db;
         }
 
-        public async Task<Booking?> UpdateAsync(int bookingId, Booking booking)
+        public async Task<Booking?> UpdateAsync(Booking booking)
         {
-            var bookingFromDb = await _db.Bookings.FindAsync(bookingId);
-            if (bookingFromDb != null && bookingFromDb.DoctorId == booking.DoctorId)
+            var bookingFromDb = await _db.Bookings.FindAsync(booking.Id);
+            if (bookingFromDb != null)
             {
-                bookingFromDb.DoctorId = booking.DoctorId;
-                bookingFromDb.StartTime = booking.StartTime;
-                bookingFromDb.EndTime = booking.EndTime;
                 bookingFromDb.Status = booking.Status;
-                bookingFromDb.Notes = booking.Notes;
-                bookingFromDb.ContactPhoneNumber = booking.ContactPhoneNumber;
-                bookingFromDb.Price = booking.Price;
+                bookingFromDb.Prescription = booking.Prescription;
 
                 return bookingFromDb;
             }

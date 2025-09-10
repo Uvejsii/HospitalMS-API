@@ -38,15 +38,26 @@ namespace HospitalMS_API.Controllers
                 return BadRequest(res?.ErrorMessage ?? "Error Logging in");
             }
 
-            return Ok(new
+            var response = new Dictionary<string, object>
             {
-                res.FirstName,
-                res.LastName,
-                res.Email,
-                res.Id,
-                res.Role,
-                res.Token
-            });
+                { "firstName", res.FirstName },
+                { "lastName", res.LastName },
+                { "email", res.Email },
+                { "id", res.Id },
+                { "role", res.Role },
+                { "token", res.Token }
+            };
+
+            if (!string.IsNullOrEmpty(res.DoctorId))
+            {
+                response.Add("doctorId", res.DoctorId);
+                if (!string.IsNullOrEmpty(res.Department))
+                    response.Add("department", res.Department);
+                if (!string.IsNullOrEmpty(res.ProfileImage))
+                    response.Add("profileImage", res.ProfileImage);
+            }
+
+            return Ok(response);
         }
 
         [HttpPost]

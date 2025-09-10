@@ -24,7 +24,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetAllBookings")]
         public async Task<IActionResult> GetAllBookings()
         {
-            var bookingsModel = await _unitOfWork.Booking.GetAllAsync(includeProperties: "User,Doctor.Reviews");
+            var bookingsModel = await _unitOfWork.Booking.GetAllAsync(includeProperties: "User,Doctor.Reviews,Doctor.Departament");
 
             List<BookingDto> bookings = _mapper.Map<List<BookingDto>>(bookingsModel);
 
@@ -84,17 +84,19 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpPut]
-        [Route("UpdateBookingStatus/{bookingId:int}/{bookingStatus:int}")]
-        public async Task<IActionResult> UpdateBookingStatus([FromRoute] int bookingId, [FromRoute] int bookingStatus)
+        [Route("UpdateBookingStatus")]
+        public async Task<IActionResult> UpdateBookingStatus([FromBody] UpdateBookingDto updateBookingDto)
         {
-            Booking booking = await _unitOfWork.Booking.GetAsync(b => b.Id == bookingId);
+            var bookingDomainModel = _mapper.Map<Booking>(updateBookingDto);
 
-            if (booking == null)
+            bookingDomainModel = await _unitOfWork.Booking.UpdateAsync(bookingDomainModel);
+
+            if (bookingDomainModel == null)
             {
                 return BadRequest("Booking not found");
             }
 
-            booking.Status = (BookingStatus)bookingStatus;
+            _mapper.Map<BookingDto>(bookingDomainModel);
 
             await _unitOfWork.SaveAsync();
 
@@ -114,11 +116,11 @@ namespace HospitalMS_API.Controllers
         [Route("GetBookingsByDoctorId")]
         public async Task<IActionResult> GetBookingByDoctorId([FromQuery] int doctorId)
         {
-            var bookingsModel = await _unitOfWork.Booking.GetAllAsync(b => b.DoctorId == doctorId, includeProperties: "User,Doctor.Reviews");
-            List<BookingDto> bookings = _mapper.Map<List<BookingDto>>(bookingsModel);
+            var bookingsModel = await _unitOfWork.Booking.GetAllAsync(b => b.DoctorId == doctorId, includeProperties: "User");
+            List<DoctorBookingDto> bookings = _mapper.Map<List<DoctorBookingDto>>(bookingsModel);
             if (bookings == null || !bookings.Any())
             {
-                return Ok(new List<BookingDto>());
+                return Ok(new List<DoctorBookingDto>());
             }
             return Ok(bookings);
         }

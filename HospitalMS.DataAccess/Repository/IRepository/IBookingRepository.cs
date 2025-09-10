@@ -10,6 +10,6 @@ namespace HospitalMS.DataAccess.Repository.IRepository
 {
     public interface IBookingRepository : IRepository<Booking>
     {
-        Task<Booking?> UpdateAsync(int bookingId, Booking booking);
+        Task<Booking?> UpdateAsync(Booking booking);
     }
 }

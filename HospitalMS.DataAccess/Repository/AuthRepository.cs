@@ -63,6 +63,16 @@ namespace HospitalMS.DataAccess.Repository
                             Role = string.Join(",", roles),
                             Id = user.Id,
                             Token = jwtToken,
+                            DoctorId = roles.Contains("Doctor") ? _db.Doctors.Where(d => d.ApplicationUserId == user.Id).Select(d => d.Id.ToString()).FirstOrDefault() : null,
+                            Department = roles.Contains("Doctor") ? _db.Doctors
+                                .Where(d => d.ApplicationUserId == user.Id)
+                                .Include(d => d.Departament)
+                                .Select(d => d.Departament.Name)
+                                .FirstOrDefault() : null,
+                            ProfileImage = roles.Contains("Doctor") ? _db.Doctors
+                                .Where(d => d.ApplicationUserId == user.Id)
+                                .Select(d => d.ImageFilePath)
+                                .FirstOrDefault() : null,
                             Success = true,
                         };
 

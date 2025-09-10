@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HospitalMS.Models.Domain
 {
-    public class Booking
+    public class Booking : IValidatableObject
     {
         [Key]
         public int Id { get; set; }
@@ -24,5 +24,16 @@ namespace HospitalMS.Models.Domain
         public int DoctorId { get; set; }
         [ForeignKey("DoctorId")]
         public Doctor Doctor { get; set; }
+        public string? Prescription { get; set; }
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (Status == BookingStatus.Finished && string.IsNullOrEmpty(Prescription))
+            {
+                yield return new ValidationResult(
+                "Prescription is required when booking status is Finished.",
+                new[] { nameof(Prescription) }
+            );
+            }
+        }
     }
 }

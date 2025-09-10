@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HospitalMS.Models.DTO
 {
-    public class BookingDto
+    public class DoctorBookingDto
     {
         public int id { get; set; }
         public string Notes { get; set; }
@@ -18,6 +18,5 @@ namespace HospitalMS.Models.DTO
         public BookingStatus Status { get; set; }
         public string Prescription { get; set; }
         public DoctorReviewerDto User { get; set; }
-        public DoctorDto Doctor { get; set; }
     }
 }
