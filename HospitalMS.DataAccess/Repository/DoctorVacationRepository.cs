@@ -79,5 +79,80 @@ namespace HospitalMS.DataAccess.Repository
             return true;
         }
 
+        public async Task<DoctorVacationStatsByTypeDto> GetDoctorVacationStatsByDoctorId(int doctorId)
+        {
+            var allVacations = await _db.DoctorVacations
+                .Where(v => v.DoctorId == doctorId)
+                .ToListAsync();
+
+            var result = new DoctorVacationStatsByTypeDto
+            {
+                VacationTypeStats = Enum.GetValues(typeof(DoctorVacationType))
+                    .Cast<DoctorVacationType>()
+                    .Select(type =>
+                    {
+                        var vacationsOfType = allVacations.Where(v => v.VacationType == type).ToList();
+
+                        var pending = vacationsOfType
+                            .Where(v => v.IsApproved == null)
+                            .Select(v => new DoctorVacationRequestInfoDto
+                            {
+                                Id = v.Id,
+                                VacationType = v.VacationType,
+                                StartDate = v.StartDate,
+                                EndDate = v.EndDate,
+                                RequestedDays = (v.EndDate - v.StartDate).Days + 1
+                            })
+                            .ToList();
+
+                        var approved = vacationsOfType
+                            .Where(v => v.IsApproved == true)
+                            .Select(v => new DoctorVacationRequestInfoDto
+                            {
+                                Id = v.Id,
+                                VacationType = v.VacationType,
+                                StartDate = v.StartDate,
+                                EndDate = v.EndDate,
+                                RequestedDays = (v.EndDate - v.StartDate).Days + 1
+                            })
+                            .ToList();
+
+                        var rejected = vacationsOfType
+                            .Where(v => v.IsApproved == false)
+                            .Select(v => new DoctorVacationRequestInfoDto
+                            {
+                                Id = v.Id,
+                                VacationType = v.VacationType,
+                                StartDate = v.StartDate,
+                                EndDate = v.EndDate,
+                                RequestedDays = (v.EndDate - v.StartDate).Days + 1
+                            })
+                            .ToList();
+
+                        return new DoctorVacationTypeStatsDto
+                        {
+                            VacationType = type,
+                            TotalRequestedDays = vacationsOfType.Sum(v => (v.EndDate - v.StartDate).Days + 1),
+                            PendingRequestedDays = pending.Sum(p => p.RequestedDays),
+                            ApprovedRequestedDays = approved.Sum(a => a.RequestedDays),
+                            RejectedRequestedDays = rejected.Sum(r => r.RequestedDays),
+                            Pending = pending,
+                            Approved = approved,
+                            Rejected = rejected
+                        };
+                    })
+                    .ToList()
+            };
+
+            return result;
+        }
+
+        public async Task<bool> CheckIfDoctorVacationExists(int doctorId, DateTime startDate, DateTime endDate)
+        {
+            return await _db.DoctorVacations.AnyAsync(v =>
+                v.DoctorId == doctorId &&
+                v.StartDate <= endDate &&
+                v.EndDate >= startDate);
+        }
     }
 }

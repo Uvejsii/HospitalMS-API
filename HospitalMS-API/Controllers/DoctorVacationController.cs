@@ -86,5 +86,22 @@ namespace HospitalMS_API.Controllers
 
             return Ok(vacations);
         }
+
+        [HttpGet]
+        [Route("GetTotalVacationRequestsByDrId")]
+        public async Task<IActionResult> GetDoctorVacationRequestsByDrId([FromQuery] int doctorId)
+        {
+            var stats = await _unitOfWork.DoctorVacation.GetDoctorVacationStatsByDoctorId(doctorId);
+            
+            return Ok(stats);
+        }
+
+        [HttpGet]
+        [Route("CheckIfVacationExists")]
+        public async Task<IActionResult> CheckIfVacationExists([FromQuery] int doctorId, DateTime startDate, DateTime endDate)
+        {
+            var exists = await _unitOfWork.DoctorVacation.CheckIfDoctorVacationExists(doctorId, startDate, endDate);
+            return Ok(exists);
+        }
     }
 }

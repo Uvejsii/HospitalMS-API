@@ -139,6 +139,29 @@ namespace HospitalMS_API.Controllers
         }
 
         [HttpGet]
+        [Route("GetPatientsByDoctorId")]
+        public async Task<IActionResult> GetPatientsByDoctorId([FromQuery] int doctorId)
+        {
+            var bookingsDomainModel = await _unitOfWork.Booking.GetAllAsync(p => p.DoctorId == doctorId, includeProperties: "User,Doctor");
+            if (bookingsDomainModel == null || !bookingsDomainModel.Any())
+            {
+                return Ok(new List<object>());
+            }
+
+            var patientStats = bookingsDomainModel
+                .GroupBy(b => b.UserId)
+                .Select(g => new
+                {
+                    User = _mapper.Map<DoctorReviewerDto>(g.First().User),
+                    TotalBookings = g.Count(),
+                    TotalSpent = g.Where(b => b.Status == BookingStatus.Finished).Sum(b => b.Price)
+                })
+                .ToList();
+
+            return Ok(patientStats);
+        }
+
+        [HttpGet]
         [Route("GetFreeBookingSlotsByDay")]
         public async Task<IActionResult> GetFreeBookingSlotsByDay([FromQuery] int doctorId, [FromQuery] int day)
         {
@@ -222,7 +245,7 @@ namespace HospitalMS_API.Controllers
         [Route("GetMonthlyBookingTotals")]
         public async Task<IActionResult> GetMonthlyBookingTotals()
         {
-            var bookings = await _unitOfWork.Booking.GetAllAsync();
+            var bookings = await _unitOfWork.Booking.GetAllAsync(b => b.Status == BookingStatus.Finished);
 
             if (bookings == null || !bookings.Any())
             {
