@@ -265,5 +265,59 @@ namespace HospitalMS_API.Controllers
 
             return Ok(monthlyTotals);
         }
+
+        [HttpGet]
+        [Route("GetTodayBookingsByDoctorId")]
+        public async Task<IActionResult> GetTodayBookingsByDoctorId([FromQuery] int doctorId)
+        {
+            var today = DateTime.Today;
+
+            var bookings = await _unitOfWork.Booking.GetAllAsync(
+                b => b.DoctorId == doctorId &&
+                     b.Status != BookingStatus.Finished &&
+                     b.Status != BookingStatus.Cancelled &&
+                     b.StartTime.Date == today,
+                includeProperties: "User"
+            );
+
+            if (bookings == null || !bookings.Any())
+            {
+                return Ok(new List<object>());
+            }
+
+            var result = bookings.Select(b => new
+            {
+                b.StartTime,
+                b.EndTime,
+                User = _mapper.Map<DoctorReviewerDto>(b.User)
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("GetTotalPatientsAndEarningsByDoctorId")]
+        public async Task<IActionResult> GetTotalPatientsAndEarningsByDoctorId([FromQuery] int doctorId)
+        {
+            var bookings = await _unitOfWork.Booking
+                .GetAllAsync(b => b.DoctorId == doctorId && b.Status == BookingStatus.Finished, includeProperties: "User");
+
+            if (bookings == null || !bookings.Any())
+            {
+                return Ok(new
+                {
+                    totalPatients = 0,
+                    totalEarnings = 0m
+                });
+            }
+
+            var totalPatients = bookings.Select(b => b.UserId).Distinct().Count();
+            var totalEarnings = bookings.Sum(b => b.Price);
+            return Ok(new
+            {
+                totalPatients,
+                totalEarnings
+            });
+        }
     }
 }

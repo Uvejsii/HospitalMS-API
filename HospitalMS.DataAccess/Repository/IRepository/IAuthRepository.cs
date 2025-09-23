@@ -20,6 +20,7 @@ namespace HospitalMS.DataAccess.Repository.IRepository
         Task<string> GetUserIdFromToken(string token);
         Task<Int32> GetTotalPatients();
         Task<List<AllUsersDto>> GetAllPatietns();
+        Task<List<AllAppUserDoctorsDto>> GetAllActiveAppUserDoctors();
         Task<bool> ChangePassword(ChangePasswordRequestDto changePasswordRequestDto);
         Task<bool> Logout();
     }

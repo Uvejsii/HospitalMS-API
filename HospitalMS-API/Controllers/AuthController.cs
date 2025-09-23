@@ -303,6 +303,20 @@ namespace HospitalMS_API.Controllers
             return Ok(patients);
         }
 
+        [HttpGet]
+        [Route("GetAllActiveAppUserDoctors")]
+        public async Task<IActionResult> GetAllDoctors()
+        {
+            var doctors = await _unitOfWork.Auth.GetAllActiveAppUserDoctors();
+
+            if (doctors == null || !doctors.Any())
+            {
+                return Ok(new List<AllAppUserDoctorsDto>());
+            }
+
+            return Ok(doctors);
+        }
+
         [HttpPut]
         [Route("ChangePasswordCustom")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto changePasswordRequestDto)

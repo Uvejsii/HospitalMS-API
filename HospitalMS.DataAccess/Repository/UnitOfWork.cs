@@ -27,14 +27,14 @@ namespace HospitalMS.DataAccess.Repository
         public IDoctorReviewRepository DoctorReview { get; private set; }
         public IBookingRepository Booking { get; private set; }
         public IDoctorVacationRepository DoctorVacation { get; private set; }
-        public UnitOfWork(ApplicationDbContext db, IAmazonS3 amazonS3, UserManager<ApplicationUser> userManager, 
-            RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager,
-            ClaimsPrincipal claimsPrincipal, IConfiguration configuration)
+        public UnitOfWork(ApplicationDbContext db, IAmazonS3 amazonS3, UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager,
+        IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
             Doctor = new DoctorRepository(_db, amazonS3);
             Departament = new DepartamentRepository(_db);
-            Auth = new AuthRepository(_db, userManager, roleManager, signInManager, claimsPrincipal, configuration);
+            Auth = new AuthRepository(_db, userManager, roleManager, signInManager, httpContextAccessor, configuration);
             Chat = new ChatRepository(_db);
             DoctorReview = new DoctorReviewRepository(_db);
             Booking = new BookingRepository(_db);

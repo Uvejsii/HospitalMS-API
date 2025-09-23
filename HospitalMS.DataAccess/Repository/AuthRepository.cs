@@ -25,17 +25,17 @@ namespace HospitalMS.DataAccess.Repository
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ClaimsPrincipal _claimsPrincipal;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
 
         public AuthRepository(ApplicationDbContext db, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, 
-            SignInManager<ApplicationUser> signInManager, ClaimsPrincipal claimsPrincipal, IConfiguration configuration) : base(db)
+            SignInManager<ApplicationUser> signInManager, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(db)
         {
             _db = db;
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
-            _claimsPrincipal = claimsPrincipal;
+            _httpContextAccessor = httpContextAccessor;
             _configuration = configuration;
         }
 
@@ -182,7 +182,14 @@ namespace HospitalMS.DataAccess.Repository
 
         public async Task<(bool Success, string FirstName, string LastName, IList<string> Roles, string UserId)> PingAuth()
         {
-            var userId = _claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var claimsPrincipal = _httpContextAccessor.HttpContext?.User;
+
+            if (claimsPrincipal == null)
+            {
+                return (false, null, null, null, null);
+            }
+
+            var userId = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
                 return (false, null, null, null, null);
@@ -311,6 +318,24 @@ namespace HospitalMS.DataAccess.Repository
             }
 
             return patientUsers;
+        }
+
+        public async Task<List<AllAppUserDoctorsDto>> GetAllActiveAppUserDoctors()
+        {
+            var appDoctors = await _db.Doctors
+                .AsNoTracking()
+                .Where(d => d.isActive)
+                .Select(d => new AllAppUserDoctorsDto
+                {
+                    ApplicationUserId = d.ApplicationUserId,
+                    FirstName = d.FirstName,
+                    LastName = d.LastName,
+                    Email = d.Email,
+                    ImageFilePath = d.ImageFilePath
+                })
+                .ToListAsync();
+
+            return appDoctors;
         }
 
         public Task<bool> ChangePassword(ChangePasswordRequestDto changePasswordRequestDto)

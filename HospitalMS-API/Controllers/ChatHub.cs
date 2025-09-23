@@ -6,7 +6,7 @@ namespace HospitalMS_API.Hubs
     {
         public async Task SendMessage(string senderId, string receiverId, string message)
         {
-            await Clients.Users(senderId, receiverId).SendAsync("ReceiveMessage", senderId, message);
+            await Clients.Users(senderId, receiverId).SendAsync("ReceiveMessage", senderId, receiverId, message);
         }
     }
 }

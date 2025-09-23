@@ -3,6 +3,7 @@ using Azure.Core;
 using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HospitalMS_API.Controllers
 {
     [Route("[controller]")]
-    [ApiController]
+    [ApiController, Authorize]
     public class DoctorsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

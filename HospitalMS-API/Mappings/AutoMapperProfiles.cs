@@ -36,6 +36,7 @@ namespace HospitalMS_API.Mappings
             CreateMap<AddDoctorReviewRequestDto, DoctorReview>().ReverseMap();
             CreateMap<UpdateDoctorReviewRequestDto, DoctorReview>().ReverseMap();
             CreateMap<DoctorReviewerDto, ApplicationUser>().ReverseMap();
+            CreateMap<AllAppUserDoctorsDto, Doctor>().ReverseMap();
 
             // Bookings Mappings
             CreateMap<Booking, AddBookingRequestDto>().ReverseMap();

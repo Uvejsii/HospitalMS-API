@@ -3,6 +3,7 @@ using HospitalMS.DataAccess.Repository.IRepository;
 using HospitalMS.Models.Domain;
 using HospitalMS.Models.DTO;
 using HospitalMS_API.Hubs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace HospitalMS_API.Controllers
 {
     [Route("[controller]")]
-    [ApiController]
+    [ApiController, Authorize]
     public class ChatController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -40,14 +41,14 @@ namespace HospitalMS_API.Controllers
             await _unitOfWork.SaveAsync();
 
             await _hubContext.Clients.Users(sendMessageRequestDto.SenderId, sendMessageRequestDto.ReceiverId)
-                .SendAsync("ReceiveMessage", sendMessageRequestDto.SenderId, sendMessageRequestDto.Message);
+                .SendAsync("ReceiveMessage", sendMessageRequestDto.SenderId, sendMessageRequestDto.ReceiverId, sendMessageRequestDto.Message);
 
             return Ok(new { message = "Message sent successfully." });
         }
 
         [HttpGet]
-        [Route("GetMessages/{senderId}/{receiverId}")]
-        public async Task<IActionResult> GetMessages(string senderId, string receiverId)
+        [Route("GetMessages")]
+        public async Task<IActionResult> GetMessages([FromQuery] string senderId, string receiverId)
         {
             var senderExists = await _unitOfWork.Auth.GetAsync(u => u.Id == senderId) != null;
             var receiverExists = await _unitOfWork.Auth.GetAsync(u => u.Id == receiverId) != null;
@@ -60,12 +61,14 @@ namespace HospitalMS_API.Controllers
             var messages = await _unitOfWork.Chat.GetAllAsync(m => (m.SenderId == senderId && m.ReceiverId == receiverId) ||
                                                                     (m.SenderId == receiverId && m.ReceiverId == senderId));
 
-            if (!messages.Any())
+            var orderedMessages = messages.OrderBy(m => m.SentAt).ToList();
+
+            if (!orderedMessages.Any())
             {
                 return Ok(new List<ChatMessageResponseDto>());
             }
 
-            return Ok(_mapper.Map<List<ChatMessageResponseDto>>(messages));
+            return Ok(_mapper.Map<List<ChatMessageResponseDto>>(orderedMessages));
         }
 
         [HttpGet]
